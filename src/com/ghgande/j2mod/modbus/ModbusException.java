@@ -34,32 +34,34 @@
 package com.ghgande.j2mod.modbus;
 
 /**
- * Superclass of all specialised exceptions in
- * this package.
- *
+ * Superclass of all specialised exceptions in this package.
+ * 
  * @author Dieter Wimberger
  * @version 1.2rc1 (09/11/2004)
  */
-public class ModbusException
-    extends Exception {
+public class ModbusException extends Exception {
 
-  /**
-   * Constructs a new <tt>ModbusException</tt>
-   * instance.
-   */
-  public ModbusException() {
-    super();
-  }//constructor
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 
-  /**
-   * Constructs a new <tt>ModbusException</tt>
-   * instance with the given message.
-   * <p>
-   * @param message the message describing this
-   *        <tt>ModbusException</tt>.
-   */
-  public ModbusException(String message) {
-    super(message);
-  }//constructor
+	/**
+	 * Constructs a new <tt>ModbusException</tt> instance.
+	 */
+	public ModbusException() {
+		super();
+	}
 
-}//ModbusException
+	/**
+	 * Constructs a new <tt>ModbusException</tt> instance with the given
+	 * message.
+	 * <p>
+	 * 
+	 * @param message
+	 *            the message describing this <tt>ModbusException</tt>.
+	 */
+	public ModbusException(String message) {
+		super(message);
+	}
+}

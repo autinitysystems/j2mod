@@ -45,9 +45,9 @@ public interface Modbus {
 
   /**
    * JVM flag for debug mode. Can be set passing the system property
-   * net.wimpi.modbus.debug=false|true (-D flag to the jvm).
+   * com.ghgande.j2mod.modbus.debug=false|true (-D flag to the jvm).
    */
-  public static boolean debug = "true".equals(System.getProperty("net.wimpi.modbus.debug"));
+  public static boolean debug = "true".equals(System.getProperty("com.ghgande.modbus.debug"));
   
   /**
    * Defines the class 1 function code
@@ -93,6 +93,12 @@ public interface Modbus {
   public static final int WRITE_SINGLE_REGISTER = 6;
   
   /**
+   * Defines a standard function code
+   * for <tt>write multiple coils</tt>.
+   */
+  public static final int WRITE_MULTIPLE_COILS = 15;
+
+  /**
    * Defines the class 0 function code
    * for <tt>write multiple registers</tt>.
    */
@@ -104,12 +110,6 @@ public interface Modbus {
    */
   public static final int REPORT_SLAVE_ID = 17;
   
-  /**
-   * Defines a standard function code
-   * for <tt>write multiple coils</tt>.
-   */
-  public static final int WRITE_MULTIPLE_COILS = 15;
-
   /**
    * Defines the function code for reading
    * encapsulated data, such as vendor information.
@@ -187,7 +187,7 @@ public interface Modbus {
   public static final int SLAVE_DEVICE_FAILURE = 4;
   
   /**
-   * Defines the Modbus slave exception type <tt>negative acknowledgement</tt>.
+   * Defines the Modbus slave exception type <tt>negative acknowledgment</tt>.
    * This exception code indicates the slave cannot perform the requested
    * action.
    */
@@ -277,5 +277,4 @@ public interface Modbus {
    */
   public static final String DEFAULT_SERIAL_ENCODING = SERIAL_ENCODING_ASCII;
 
-}//class Modbus
-
+}

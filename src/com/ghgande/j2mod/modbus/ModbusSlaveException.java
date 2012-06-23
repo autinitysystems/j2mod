@@ -34,78 +34,113 @@
 package com.ghgande.j2mod.modbus;
 
 /**
- * Class that implements a <tt>ModbusSlaveException</tt>.
- * Instances of this exception are thrown when
- * the slave returns a Modbus exception.
- *
+ * Class that implements a <tt>ModbusSlaveException</tt>. Instances of this
+ * exception are thrown when the slave returns a Modbus exception.
+ * 
  * @author Dieter Wimberger
  * @version 1.2rc1 (09/11/2004)
  */
-public class ModbusSlaveException
-    extends ModbusException {
+public class ModbusSlaveException extends ModbusException {
 
-  //instance attributes
-  private int m_Type = -1;
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 
-  /**
-   * Constructs a new <tt>ModbusSlaveException</tt>
-   * instance with the given type.<br>
-   * Types are defined according to the protocol
-   * specification in <tt>net.wimpi.modbus.Modbus</tt>.
-   * <p>
-   * @param TYPE the type of exception that occured.
-   *
-   * @see net.wimpi.modbus.Modbus
-   */
-  public ModbusSlaveException(int TYPE) {
-    super();
-    m_Type = TYPE;
-  }//constructor
+	/**
+	 * Instance type attribute
+	 */
+	private int m_Type = -1;
 
-  /**
-   * Returns the type of this <tt>ModbusSlaveException</tt>.
-   * <br>
-   * Types are defined according to the protocol
-   * specification in <tt>net.wimpi.modbus.Modbus</tt>.
-   * <p>
-   * @return the type of this <tt>ModbusSlaveException</tt>.
-   *
-   * @see net.wimpi.modbus.Modbus
-   */
-  public int getType() {
-    return m_Type;
-  }//getType
+	/**
+	 * <p>
+	 * Constructs a new <tt>ModbusSlaveException</tt> instance with the given
+	 * type.
+	 * 
+	 * <p>
+	 * Types are defined according to the protocol specification in
+	 * <tt>net.wimpi.modbus.Modbus</tt>.
+	 * 
+	 * @param TYPE
+	 *            the type of exception that occured.
+	 * 
+	 * @see net.wimpi.modbus.Modbus
+	 */
+	public ModbusSlaveException(int TYPE) {
+		super();
 
-  /**
-   * Tests if this <tt>ModbusSlaveException</tt>
-   * is of a given type.
-   * <br>
-   * Types are defined according to the protocol
-   * specification in <tt>net.wimpi.modbus.Modbus</tt>.
-   * <p>
-   * @param TYPE the type to test this
-   *        <tt>ModbusSlaveException</tt> type against.
-   *
-   * @return true if this <tt>ModbusSlaveException</tt>
-   *         is of the given type, false otherwise.
-   *
-   * @see net.wimpi.modbus.Modbus
-   */
-  public boolean isType(int TYPE) {
-    return (TYPE == m_Type);
-  }//isType
+		m_Type = TYPE;
+	}
 
-  public String getMessage() {
-	  switch (m_Type) {
-	  case 1: return "Illegal Function";
-	  case 2: return "Illegal Data Address";
-	  case 3: return "Illegal Data Value";
-	  case 4: return "Slave Device Failure";
-	  case 5: return "Acknowledge";
-	  case 6: return "Slave Device Busy";
-	  case 8: return "Memory Parity Error";
-	  }
-	  return "Error Code = " + m_Type;
-  }
+	/**
+	 * <p>
+	 * Returns the type of this <tt>ModbusSlaveException</tt>. <br>
+	 * Types are defined according to the protocol specification in
+	 * <tt>net.wimpi.modbus.Modbus</tt>.
+	 * 
+	 * @return the type of this <tt>ModbusSlaveException</tt>.
+	 * 
+	 * @see net.wimpi.modbus.Modbus
+	 */
+	public int getType() {
+		return m_Type;
+	}
 
-}//ModbusSlaveException
+	/**
+	 * <p>
+	 * Tests if this <tt>ModbusSlaveException</tt> is of a given type.
+	 * 
+	 * <p>
+	 * Types are defined according to the protocol specification in
+	 * <tt>net.wimpi.modbus.Modbus</tt>.
+	 * 
+	 * @param TYPE
+	 *            the type to test this <tt>ModbusSlaveException</tt> type
+	 *            against.
+	 * 
+	 * @return true if this <tt>ModbusSlaveException</tt> is of the given type,
+	 *         false otherwise.
+	 * 
+	 * @see net.wimpi.modbus.Modbus
+	 */
+	public boolean isType(int TYPE) {
+		return (TYPE == m_Type);
+	}
+
+	/**
+	 * Get the exception type message associated with this exception.
+	 * 
+	 * @returns a String indicating the type of slave exception.
+	 */
+	public String getMessage() {
+		return getMessage(m_Type);
+	}
+
+	/**
+	 * Get the exception type message associated with the given exception
+	 * number.
+	 * 
+	 * @param type
+	 *            Numerical value of the Modbus exception.
+	 * @return a String indicating the type of slave exception.
+	 */
+	public static String getMessage(int type) {
+		switch (type) {
+		case 1:
+			return "Illegal Function";
+		case 2:
+			return "Illegal Data Address";
+		case 3:
+			return "Illegal Data Value";
+		case 4:
+			return "Slave Device Failure";
+		case 5:
+			return "Acknowledge";
+		case 6:
+			return "Slave Device Busy";
+		case 8:
+			return "Memory Parity Error";
+		}
+		return "Error Code = " + type;
+	}
+}
