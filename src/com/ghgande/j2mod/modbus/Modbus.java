@@ -93,6 +93,34 @@ public interface Modbus {
   public static final int WRITE_SINGLE_REGISTER = 6;
   
   /**
+   * <tt>read exception status</tt>
+   * 
+   * Serial devices only.
+   */
+  public static final int READ_EXCEPTION_STATUS = 7;
+  
+  /**
+   * <tt>get serial diagnostics</tt>
+   * 
+   * Serial devices only.
+   */
+  public static final int GET_SERIAL_DIAGNOSTICS = 8;
+  
+  /**
+   * <tt>get comm event counter</tt>
+   * 
+   * Serial devices only.
+   */
+  public static final int GET_COMM_EVENT_COUNTER = 11;
+  
+  /**
+   * <tt>get comm event log</tt>
+   * 
+   * Serial devices only.
+   */
+  public static final int GET_COMM_EVENT_LOG = 12;
+  
+  /**
    * Defines a standard function code
    * for <tt>write multiple coils</tt>.
    */
@@ -109,6 +137,39 @@ public interface Modbus {
    * for <tt>read slave ID</tt>.
    */
   public static final int REPORT_SLAVE_ID = 17;
+  
+  /**
+   * <tt>read file record</tt>
+   */
+  public static final int READ_FILE_RECORD = 20;
+  
+  /**
+   * <tt>write file record</tt>
+   */
+  public static final int WRITE_FILE_RECORD = 21;
+  
+  /**
+   * <tt>mask write register</tt>
+   * 
+   * Update a single register using its current value and an AND
+   * and OR mask.
+   */
+  public static final int MASK_WRITE_REGISTER = 22;
+  
+  /**
+   * <tt>read / write multiple registers</tt>
+   * 
+   * Write some number of registers, then read some number of
+   * potentially other registers back.
+   */
+  public static final int READ_WRITE_MULTIPLE = 23;
+  
+  /**
+   * <tt>read FIFO queue</tt>
+   * 
+   * Read from a FIFO queue.
+   */
+  public static final int READ_FIFO_QUEUE = 24;
   
   /**
    * Defines the function code for reading

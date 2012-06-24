@@ -158,6 +158,7 @@ public class ModbusTCPTransport implements ModbusTransport {
 						throw new EOFException("Premature end of stream (Header truncated).");
 
 					int transaction = ModbusUtil.registerToShort(buffer, 0);
+					int protocol = ModbusUtil.registerToShort(buffer, 2);
 					int count = ModbusUtil.registerToShort(buffer, 4);
 
 					if (m_Input.read(buffer, 6, count) == -1)
@@ -172,21 +173,31 @@ public class ModbusTCPTransport implements ModbusTransport {
 					m_ByteIn.reset();
 					req = ModbusRequest.createModbusRequest(functionCode);
 					req.setUnitID(unit);
-					req.setProtocolID(0);
+					req.setHeadless(false);
+					
 					req.setTransactionID(transaction);
+					req.setProtocolID(protocol);
 					req.setDataLength(count);
+					
 					req.readFrom(m_ByteIn);
 				} else {
 					/*
-					 * This is a headless request.  Yipes!
+					 * This is a headless request.
 					 */
 					int unit = m_Input.readByte();
 					int function = m_Input.readByte();
 
 					req = ModbusRequest.createModbusRequest(function);
 					req.setUnitID(unit);
-					req.setHeadless();
+					req.setHeadless(true);
+					
 					req.readData(m_Input);
+					
+					/*
+					 * Discard the CRC.  This is a TCP/IP connection,
+					 * which has proper error correction and recovery.
+					 */
+					m_Input.readShort();
 				}
 			}
 			return req;
@@ -220,11 +231,18 @@ public class ModbusTCPTransport implements ModbusTransport {
 						throw new ModbusIOException("Premature end of stream (Header truncated).");
 
 					/*
+					 * The transaction ID is the first word (offset 0) in the data
+					 * that was just read.  It will be echoed back to the requester.
+					 * 
+					 * The protocol ID is the second word (offset 2) in the data.
+					 * It should always be 0, but I don't check.
+					 * 
 					 * The length of the payload is the third word (offset 4) in the
 					 * data that was just read.  That's what I need in order to
 					 * read the rest of the response.
 					 */
 					int transaction = ModbusUtil.registerToShort(buffer, 0);
+					int protocol = ModbusUtil.registerToShort(buffer, 2);
 					int count = ModbusUtil.registerToShort(buffer, 4);
 
 					if (m_Input.read(buffer, 6, count) == -1)
@@ -243,10 +261,13 @@ public class ModbusTCPTransport implements ModbusTransport {
 					 */
 					m_ByteIn.reset();
 					response.readFrom(m_ByteIn);
+					
 					response.setTransactionID(transaction);
+					response.setProtocolID(protocol);
 				} else {
 					/*
-					 * This is a headless response.  Yipes!
+					 * This is a headless response.  It has the same
+					 * format as a RTU over Serial response.
 					 */
 					int unit = m_Input.readByte();
 					int function = m_Input.readByte();
@@ -255,6 +276,12 @@ public class ModbusTCPTransport implements ModbusTransport {
 					response.setUnitID(unit);
 					response.setHeadless();
 					response.readData(m_Input);
+					
+					/*
+					 * Now discard the CRC.  Which hopefully wasn't
+					 * needed because this is a TCP transport.
+					 */
+					m_Input.readShort();
 				}
 			}
 			return response;

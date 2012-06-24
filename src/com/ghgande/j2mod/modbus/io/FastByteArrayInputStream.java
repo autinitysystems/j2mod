@@ -79,157 +79,159 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * This class is a replacement for ByteArrayInputStream that
- * does not synchronize every byte read.
+ * This class is a replacement for ByteArrayInputStream that does not
+ * synchronize every byte read.
  * <p/>
- *
+ * 
  * @author Mark Hayes
  * @author Dieter Wimberger
  * 
  * @version 1.2rc1 (09/11/2004)
  */
-public class FastByteArrayInputStream
-    extends InputStream {
+public class FastByteArrayInputStream extends InputStream {
 
-  /**
-   * Number of bytes in the input buffer.
-   */
-  protected int count;
-  /**
-   * Actual position pointer into the input buffer.
-   */
-  protected int pos;
+	/**
+	 * Number of bytes in the input buffer.
+	 */
+	protected int count;
+	/**
+	 * Actual position pointer into the input buffer.
+	 */
+	protected int pos;
 
-  /**
-   * Marked position pointer into the input buffer.
-   */
-  protected int mark;
-  /**
-   * Input buffer <tt>byte[]</tt>.
-   */
-  protected byte[] buf;
+	/**
+	 * Marked position pointer into the input buffer.
+	 */
+	protected int mark;
+	/**
+	 * Input buffer <tt>byte[]</tt>.
+	 */
+	protected byte[] buf;
 
-  /**
-   * Creates an input stream.
-   *
-   * @param buffer the data to read.
-   */
-  public FastByteArrayInputStream(byte[] buffer) {
-    buf = buffer;
-    count = buffer.length;
-    pos = 0;
-    mark = 0;
-    //System.out.println("Buffer length="+buf.length );
-    //System.out.println("count=" + count + " pos=" + pos);
-  }//constructor
+	/**
+	 * Creates an input stream.
+	 * 
+	 * @param buffer
+	 *            the data to read.
+	 */
+	public FastByteArrayInputStream(byte[] buffer) {
+		buf = buffer;
+		count = buffer.length;
+		pos = 0;
+		mark = 0;
+		// System.out.println("Buffer length="+buf.length );
+		// System.out.println("count=" + count + " pos=" + pos);
+	}// constructor
 
-  /**
-   * Creates an input stream.
-   *
-   * @param buffer the data to read.
-   * @param offset the byte offset at which to begin reading.
-   * @param length the number of bytes to read.
-   */
-  public FastByteArrayInputStream(byte[] buffer, int offset, int length) {
-    buf = buffer;
-    pos = offset;
-    count = length;
-  }//constructor
+	/**
+	 * Creates an input stream.
+	 * 
+	 * @param buffer
+	 *            the data to read.
+	 * @param offset
+	 *            the byte offset at which to begin reading.
+	 * @param length
+	 *            the number of bytes to read.
+	 */
+	public FastByteArrayInputStream(byte[] buffer, int offset, int length) {
+		buf = buffer;
+		pos = offset;
+		count = length;
+	}// constructor
 
-  // --- begin ByteArrayInputStream compatible methods ---
+	// --- begin ByteArrayInputStream compatible methods ---
 
-  public int available() {
-    return count - pos;
-  }//available
+	public int available() {
+		return count - pos;
+	}// available
 
-  public boolean markSupported() {
-    return true;
-  }//markSupported
+	public boolean markSupported() {
+		return true;
+	}// markSupported
 
-  public void mark(int readlimit) {
-    //System.out.println("mark()");
-    mark = pos;
-    //System.out.println("mark=" + mark + " pos=" + pos);
-  }//mark
+	public void mark(int readlimit) {
+		// System.out.println("mark()");
+		mark = pos;
+		// System.out.println("mark=" + mark + " pos=" + pos);
+	}// mark
 
-  public void reset() {
-    //System.out.println("reset()");
-    pos = mark;
-    //System.out.println("mark=" + mark + " pos=" + pos);
-  }//reset
+	public void reset() {
+		// System.out.println("reset()");
+		pos = mark;
+		// System.out.println("mark=" + mark + " pos=" + pos);
+	}// reset
 
-  public long skip(long count) {
-    int myCount = (int) count;
-    if (myCount + pos > this.count) {
-      myCount = this.count - pos;
-    }
-    pos += myCount;
-    return myCount;
-  }//skip
+	public long skip(long count) {
+		int myCount = (int) count;
+		if (myCount + pos > this.count) {
+			myCount = this.count - pos;
+		}
+		pos += myCount;
+		return myCount;
+	}// skip
 
-  public int read() throws IOException {
-    //System.out.println("read()");
-    //System.out.println("count=" + count + " pos=" + pos);
-    return (pos < count) ? (buf[pos++] & 0xff) : (-1);
-  }//read
+	public int read() throws IOException {
+		// System.out.println("read()");
+		// System.out.println("count=" + count + " pos=" + pos);
+		return (pos < count) ? (buf[pos++] & 0xff) : (-1);
+	}// read
 
-  public int read(byte[] toBuf) throws IOException {
-    //System.out.println("read(byte[])");
-    return read(toBuf, 0, toBuf.length);
-  }//read
+	public int read(byte[] toBuf) throws IOException {
+		// System.out.println("read(byte[])");
+		return read(toBuf, 0, toBuf.length);
+	}// read
 
-  public int read(byte[] toBuf, int offset, int length)
-      throws IOException {
-    //System.out.println("read(byte[],int,int)");
-    int avail = count - pos;
-    if (avail <= 0) {
-      return -1;
-    }
-    if (length > avail) {
-      length = avail;
-    }
-    for (int i = 0; i < length; i++) {
-      toBuf[offset++] = buf[pos++];
-    }
-    return length;
-  }//read
+	public int read(byte[] toBuf, int offset, int length) throws IOException {
+		// System.out.println("read(byte[],int,int)");
+		int avail = count - pos;
+		if (avail <= 0) {
+			return -1;
+		}
+		if (length > avail) {
+			length = avail;
+		}
+		for (int i = 0; i < length; i++) {
+			toBuf[offset++] = buf[pos++];
+		}
+		return length;
+	}// read
 
-  // --- end ByteArrayInputStream compatible methods ---
+	// --- end ByteArrayInputStream compatible methods ---
 
-  public byte[] toByteArray() {
-	    byte[] toBuf = new byte[count];
-	    System.arraycopy(buf,0,toBuf,0,count);
-	    //for (int i = 0; i < count; i++) {
-	    //  toBuf[i] = buf[i];
-	    //}
-	    return toBuf;
-	  }//toByteArray
+	public byte[] toByteArray() {
+		byte[] toBuf = new byte[count];
+		System.arraycopy(buf, 0, toBuf, 0, count);
+		// for (int i = 0; i < count; i++) {
+		// toBuf[i] = buf[i];
+		// }
+		return toBuf;
+	}// toByteArray
 
-  /**
-   * Returns the underlying data being read.
-   *
-   * @return the underlying data.
-   */
-  public byte[] getBufferBytes() {
-    return buf;
-  }//getBufferBytes
+	/**
+	 * Returns the underlying data being read.
+	 * 
+	 * @return the underlying data.
+	 */
+	public byte[] getBufferBytes() {
+		return buf;
+	}// getBufferBytes
 
-  /**
-   * Returns the offset at which data is being read from the buffer.
-   *
-   * @return the offset at which data is being read.
-   */
-  public int getBufferOffset() {
-    return pos;
-  }//getBufferOffset
+	/**
+	 * Returns the offset at which data is being read from the buffer.
+	 * 
+	 * @return the offset at which data is being read.
+	 */
+	public int getBufferOffset() {
+		return pos;
+	}// getBufferOffset
 
-  /**
-   * Returns the end of the buffer being read.
-   *
-   * @return the end of the buffer.
-   */
-  public int getBufferLength() {
-    return count;
-  }//getBufferLength
+	/**
+	 * Returns the end of the buffer being read.
+	 * 
+	 * @return the end of the buffer.
+	 */
+	public int getBufferLength() {
+		return count;
+	}// getBufferLength
 
-}//class FastByteArrayInputStream
+}// class FastByteArrayInputStream

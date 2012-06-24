@@ -79,7 +79,7 @@ public abstract class ModbusMessageImpl implements ModbusMessage {
 	 * @param b
 	 *            true if headless, false otherwise.
 	 */
-	protected void setHeadless(boolean b) {
+	public void setHeadless(boolean b) {
 		m_Headless = b;
 	}
 

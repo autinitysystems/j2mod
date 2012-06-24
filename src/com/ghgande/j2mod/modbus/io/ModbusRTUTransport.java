@@ -234,15 +234,18 @@ public class ModbusRTUTransport extends ModbusSerialTransport {
 		m_OutputStream.close();
 	}// close
 
-	private void getResponse(int fn, BytesOutputStream out) throws IOException {
-		int bc = -1, bc2 = -1, bcw = -1;
-		int inpBytes = 0;
+	private void getResponse(int function, BytesOutputStream out)
+			throws IOException {
+		int byteCount = -1;
+		int readCount = 0;
 		byte inpBuf[] = new byte[256];
 
 		int tmOut = m_CommPort.getReceiveTimeout();
+		long timedOut = System.currentTimeMillis() + tmOut;
 		if (tmOut == 0) {
 			try {
 				m_CommPort.enableReceiveTimeout(250);
+				timedOut += 250;
 			} catch (UnsupportedCommOperationException e) {
 				// Who cares ...
 			}
@@ -257,85 +260,102 @@ public class ModbusRTUTransport extends ModbusSerialTransport {
 		}
 
 		try {
-			if ((fn & 0x80) == 0) {
-				switch (fn) {
+			if ((function & 0x80) == 0) {
+				switch (function) {
 				case Modbus.READ_COILS:
 				case Modbus.READ_INPUT_DISCRETES:
 				case Modbus.READ_MULTIPLE_REGISTERS:
 				case Modbus.READ_INPUT_REGISTERS:
-				case 0x0C:
+				case Modbus.GET_COMM_EVENT_LOG:
 				case Modbus.REPORT_SLAVE_ID:
-				case 0x14: // read log entry (60000 memory reference)
-				case 0x15: // write log entry (60000 memory reference)
-				case 0x17:
-					// read the byte count;
-					bc = m_InputStream.read();
-					out.write(bc);
+				case Modbus.READ_FILE_RECORD:
+				case Modbus.WRITE_FILE_RECORD:
+				case Modbus.READ_WRITE_MULTIPLE:
+					/*
+					 * Read the data payload byte count. There will be two
+					 * additional CRC bytes afterwards.
+					 */
+					byteCount = m_InputStream.read();
+					out.write(byteCount);
 
-					int remaining = bc + 2;
+					int remaining = byteCount + 2;
 					int read = 0;
 					int loopCount = 0;
 					// now get the specified number of bytes and the 2 CRC bytes
 					while (remaining > 0 && loopCount++ < 5) {
-						if (! osIsWindows)
+						if (!osIsWindows)
 							setReceiveThreshold(remaining);
+						else
+							setReceiveThreshold(remaining > 16 ? 16 : remaining);
 
-						inpBytes = m_InputStream.read(inpBuf, 0, remaining);
-						if (inpBytes > 0) {
-							out.write(inpBuf, 0, inpBytes);
-							read += inpBytes;
-							remaining -= inpBytes;
+						readCount = m_InputStream.read(inpBuf, 0, remaining);
+						if (readCount > 0) {
+							out.write(inpBuf, 0, readCount);
+							read += readCount;
+							remaining -= readCount;
 							loopCount = 0;
 						}
-						if (remaining > 0) {
+						if (readCount == 0
+								&& System.currentTimeMillis() > timedOut)
+							break;
+
+						if (remaining > 0)
 							Thread.yield();
-						}
 					}
 					if (Modbus.debug && remaining > 0) {
-						System.err.println("Error: looking for " + (bc + 2)
-								+ " bytes, received " + read);
+						System.err.println("Error: looking for "
+								+ (byteCount + 2) + " bytes, received " + read);
 					}
 					m_CommPort.disableReceiveThreshold();
 					break;
 				case Modbus.WRITE_COIL:
 				case Modbus.WRITE_SINGLE_REGISTER:
-				case 0x0B:
+				case Modbus.GET_COMM_EVENT_COUNTER:
 				case Modbus.WRITE_MULTIPLE_COILS:
 				case Modbus.WRITE_MULTIPLE_REGISTERS:
-					// read status: only the CRC remains after address and
-					// function code
+				case Modbus.GET_SERIAL_DIAGNOSTICS:
+					/*
+					 * read status: only the CRC remains after the two data
+					 * words.
+					 */
 					setReceiveThreshold(6);
-					inpBytes = m_InputStream.read(inpBuf, 0, 6);
-					out.write(inpBuf, 0, inpBytes);
+					readCount = m_InputStream.read(inpBuf, 0, 6);
+					out.write(inpBuf, 0, readCount);
 					m_CommPort.disableReceiveThreshold();
 					break;
-				case 0x07:
-				case 0x08:
-					// read status: only the CRC remains after address and
-					// function code
+				case Modbus.READ_EXCEPTION_STATUS:
+					/*
+					 * read status: only the CRC remains after exception status
+					 * byte.
+					 */
 					setReceiveThreshold(3);
-					inpBytes = m_InputStream.read(inpBuf, 0, 3);
-					out.write(inpBuf, 0, inpBytes);
+					readCount = m_InputStream.read(inpBuf, 0, 3);
+					out.write(inpBuf, 0, readCount);
 					m_CommPort.disableReceiveThreshold();
 					break;
-				case 0x16:
+				case Modbus.MASK_WRITE_REGISTER:
 					// eight bytes in addition to the address and function codes
 					setReceiveThreshold(8);
-					inpBytes = m_InputStream.read(inpBuf, 0, 8);
-					out.write(inpBuf, 0, inpBytes);
+					readCount = m_InputStream.read(inpBuf, 0, 8);
+					out.write(inpBuf, 0, readCount);
 					m_CommPort.disableReceiveThreshold();
 					break;
-				case 0x18:
-					// read the byte count word
-					bc = m_InputStream.read();
-					out.write(bc);
-					bc2 = m_InputStream.read();
-					out.write(bc2);
-					bcw = ModbusUtil.makeWord(bc, bc2);
-					// now get the specified number of bytes and the 2 CRC bytes
-					setReceiveThreshold(bcw + 2);
-					inpBytes = m_InputStream.read(inpBuf, 0, bcw + 2);
-					out.write(inpBuf, 0, inpBytes);
+				case Modbus.READ_FIFO_QUEUE:
+					int b1,
+					b2;
+					b1 = (byte) (m_InputStream.read() & 0xFF);
+					out.write(b1);
+					b2 = (byte) (m_InputStream.read() & 0xFF);
+					out.write(b2);
+
+					byteCount = ModbusUtil.makeWord(b1, b2);
+
+					/*
+					 * now get the specified number of bytes and the 2 CRC bytes
+					 */
+					setReceiveThreshold(byteCount + 2);
+					readCount = m_InputStream.read(inpBuf, 0, byteCount + 2);
+					out.write(inpBuf, 0, readCount);
 					m_CommPort.disableReceiveThreshold();
 					break;
 				case Modbus.READ_MEI:
@@ -370,7 +390,7 @@ public class ModbusRTUTransport extends ModbusSerialTransport {
 					}
 					// now get the 2 CRC bytes
 					setReceiveThreshold(2);
-					inpBytes = m_InputStream.read(inpBuf, 0, 2);
+					readCount = m_InputStream.read(inpBuf, 0, 2);
 					out.write(inpBuf, 0, 2);
 					m_CommPort.disableReceiveThreshold();
 					m_CommPort.disableReceiveTimeout();
@@ -378,7 +398,7 @@ public class ModbusRTUTransport extends ModbusSerialTransport {
 			} else {
 				// read the exception code, plus two CRC bytes.
 				setReceiveThreshold(3);
-				inpBytes = m_InputStream.read(inpBuf, 0, 3);
+				readCount = m_InputStream.read(inpBuf, 0, 3);
 				out.write(inpBuf, 0, 3);
 				m_CommPort.disableReceiveThreshold();
 
