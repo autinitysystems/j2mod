@@ -41,102 +41,105 @@ import com.ghgande.j2mod.modbus.msg.ReadInputDiscretesRequest;
 import com.ghgande.j2mod.modbus.msg.ReadInputDiscretesResponse;
 import com.ghgande.j2mod.modbus.net.TCPMasterConnection;
 
-
 /**
- * Class that implements a simple commandline
- * tool for reading a digital input.
- *
+ * Class that implements a simple command line tool for reading a digital
+ * input.
+ * 
  * @author Dieter Wimberger
  * @version 1.2rc1 (09/11/2004)
  */
 public class DITest {
 
-  public static void main(String[] args) {
+	public static void main(String[] args) {
 
-    TCPMasterConnection con = null;
-    ModbusTCPTransaction trans = null;
-    ReadInputDiscretesRequest req = null;
-    ReadInputDiscretesResponse res = null;
+		TCPMasterConnection con = null;
+		ModbusTCPTransaction trans = null;
+		ReadInputDiscretesRequest req = null;
+		ReadInputDiscretesResponse res = null;
 
-    InetAddress addr = null;
-    int ref = 0;
-    int count = 0;
-    int repeat = 1;
-    int port = Modbus.DEFAULT_PORT;
+		InetAddress addr = null;
+		int ref = 0;
+		int count = 0;
+		int repeat = 1;
+		int port = Modbus.DEFAULT_PORT;
+		int	unit = 0;
 
-    try {
+		try {
 
-      //1. Setup the parameters
-      if (args.length < 3) {
-        printUsage();
-        System.exit(1);
-      } else {
-        try {
-          String astr = args[0];
-          int idx = astr.indexOf(':');
-          if(idx > 0) {
-            port = Integer.parseInt(astr.substring(idx+1));
-            astr = astr.substring(0,idx);
-          }
-          addr = InetAddress.getByName(astr);
-          ref = Integer.parseInt(args[1]);
-          count = Integer.parseInt(args[2]);
-          if (args.length == 4) {
-            repeat = Integer.parseInt(args[3]);
-          }
-        } catch (Exception ex) {
-          ex.printStackTrace();
-          printUsage();
-          System.exit(1);
-        }
-      }
+			// 1. Setup the parameters
+			if (args.length < 3) {
+				printUsage();
+				System.exit(1);
+			} else {
+				try {
+					String serverAddress = args[0];
+					String parts[] = serverAddress.split(":");
+					
+					String address = parts[0];
+					if (parts.length > 1) {
+						port = Integer.parseInt(parts[1]);
+						if (parts.length > 2)
+							unit = Integer.parseInt(parts[2]);
+					}
+					addr = InetAddress.getByName(address);
+					
+					ref = Integer.parseInt(args[1]);
+					count = Integer.parseInt(args[2]);
+					if (args.length == 4) {
+						repeat = Integer.parseInt(args[3]);
+					}
+				} catch (Exception ex) {
+					ex.printStackTrace();
+					printUsage();
+					System.exit(1);
+				}
+			}
 
-      //2. Open the connection
-      con = new TCPMasterConnection(addr);
-      con.setPort(port);
-      con.connect();
+			// 2. Open the connection
+			con = new TCPMasterConnection(addr);
+			con.setPort(port);
+			con.connect();
 
-      if (Modbus.debug) System.out.println("Connected to " + addr.toString() + ":" + con.getPort());
+			if (Modbus.debug)
+				System.out.println("Connected to " + addr.toString() + ":"
+						+ con.getPort());
 
-      //3. Prepare the request
-      req = new ReadInputDiscretesRequest(ref, count);
-      //ReadCoilsRequest req = new ReadCoilsRequest(ref, count);
-      req.setUnitID(0);
-      if (Modbus.debug) System.out.println("Request: " + req.getHexMessage());
+			// 3. Prepare the request
+			req = new ReadInputDiscretesRequest(ref, count);
+			req.setUnitID(unit);
+			if (Modbus.debug)
+				System.out.println("Request: " + req.getHexMessage());
 
-      //4. Prepare the transaction
-      trans = new ModbusTCPTransaction(con);
-      trans.setRequest(req);
-      trans.setReconnecting(false);
+			// 4. Prepare the transaction
+			trans = new ModbusTCPTransaction(con);
+			trans.setRequest(req);
+			trans.setReconnecting(false);
 
+			// 5. Execute the transaction repeat times
+			int k = 0;
+			do {
+				trans.execute();
 
-      //5. Execute the transaction repeat times
-      int k = 0;
-      do {
-        trans.execute();
+				res = (ReadInputDiscretesResponse) trans.getResponse();
 
-        res = (ReadInputDiscretesResponse) trans.getResponse();
-        //ReadCoilsResponse res = (ReadCoilsResponse) trans.getResponse();
+				if (Modbus.debug)
+					System.out.println("Response: " + res.getHexMessage());
+				System.out.println("Digital Inputs Status="
+						+ res.getDiscretes().toString());
+				
+				k++;
+			} while (k < repeat);
 
-        if (Modbus.debug) System.out.println("Response: " + res.getHexMessage() );
-        System.out.println("Digital Inputs Status=" + res.getDiscretes().toString());
+			// 6. Close the connection
+			con.close();
 
-        //System.out.println("Coils Status=" + res.getCoils().toString());
-        k++;
-      } while (k < repeat);
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+	}
 
-      //6. Close the connection
-      con.close();
-
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-  }//main
-
-  private static void printUsage() {
-    System.out.println(
-        "java com.ghgande.j2mod.modbus.cmd.DITest <address{:<port>} [String]> <register [int16]> <bitcount [int16]> {<repeat [int]>}"
-    );
-  }//printUsage
-
-}//class DITest
+	private static void printUsage() {
+		System.out.println(
+				"java com.ghgande.j2mod.modbus.cmd.DITest <address{:<port>} [String]> <register [int16]> <bitcount [int16]> {<repeat [int]>}");
+	}
+}

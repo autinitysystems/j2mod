@@ -39,62 +39,60 @@ import com.ghgande.j2mod.modbus.net.ModbusSerialListener;
 import com.ghgande.j2mod.modbus.procimg.*;
 import com.ghgande.j2mod.modbus.util.SerialParameters;
 
-
 /**
- * Class implementing a simple Modbus slave.
- * A simple process image is available to test
- * functionality and behaviour of the implementation.
- *
+ * Class implementing a simple Modbus slave. A simple process image is available
+ * to test functionality and behavior of the implementation.
+ * 
  * @author Dieter Wimberger
  * @version 1.2rc1 (09/11/2004)
  */
 public class SerialSlaveTest {
 
-  public static void main(String[] args) {
+	public static void main(String[] args) {
 
-    ModbusSerialListener listener = null;
-    SimpleProcessImage spi = new SimpleProcessImage();
-    String portname = args[0];
+		ModbusSerialListener listener = null;
+		SimpleProcessImage spi = new SimpleProcessImage();
+		String portname = args[0];
 
-    if (Modbus.debug) System.out.println("jModbus ModbusSerial Slave");
-    
-    try {
+		if (Modbus.debug)
+			System.out.println("j2mod ModbusSerial Slave");
 
-      //1. Prepare a process image
-      spi = new SimpleProcessImage();
-      spi.addDigitalOut(new SimpleDigitalOut(true));
-      spi.addDigitalOut(new SimpleDigitalOut(false));
-      spi.addDigitalIn(new SimpleDigitalIn(false));
-      spi.addDigitalIn(new SimpleDigitalIn(true));
-      spi.addDigitalIn(new SimpleDigitalIn(false));
-      spi.addDigitalIn(new SimpleDigitalIn(true));
-      spi.addRegister(new SimpleRegister(251));
-      spi.addInputRegister(new SimpleInputRegister(45));
+		try {
 
-      //2. Create the coupler and set the slave identity
-      ModbusCoupler.getReference().setProcessImage(spi);
-      ModbusCoupler.getReference().setMaster(false);
-      ModbusCoupler.getReference().setUnitID(2);
+			// 1. Prepare a process image
+			spi = new SimpleProcessImage();
+			spi.addDigitalOut(new SimpleDigitalOut(true));
+			spi.addDigitalOut(new SimpleDigitalOut(false));
+			spi.addDigitalIn(new SimpleDigitalIn(false));
+			spi.addDigitalIn(new SimpleDigitalIn(true));
+			spi.addDigitalIn(new SimpleDigitalIn(false));
+			spi.addDigitalIn(new SimpleDigitalIn(true));
+			spi.addRegister(new SimpleRegister(251));
+			spi.addInputRegister(new SimpleInputRegister(45));
 
-      //3. Set up serial parameters
-      SerialParameters params = new SerialParameters();
-      params.setPortName(portname);
-      params.setBaudRate(9600);
-      params.setDatabits(8);
-      params.setParity("None");
-      params.setStopbits(1);
-      params.setEncoding("ascii");
-      params.setEcho(false);
-      if (Modbus.debug) System.out.println("Encoding [" + params.getEncoding() + "]");
+			// 2. Create the coupler and set the slave identity
+			ModbusCoupler.getReference().setProcessImage(spi);
+			ModbusCoupler.getReference().setMaster(false);
+			ModbusCoupler.getReference().setUnitID(2);
 
-      //4. Set up serial listener
-      listener = new ModbusSerialListener(params);
-      listener.setListening(true);
+			// 3. Set up serial parameters
+			SerialParameters params = new SerialParameters();
+			params.setPortName(portname);
+			params.setBaudRate(9600);
+			params.setDatabits(8);
+			params.setParity("None");
+			params.setStopbits(1);
+			params.setEncoding("rtu");
+			params.setEcho(false);
+			if (Modbus.debug)
+				System.out.println("Encoding [" + params.getEncoding() + "]");
 
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-  }//main
+			// 4. Set up serial listener
+			listener = new ModbusSerialListener(params);
+			listener.setListening(true);
 
-}//class SerialSlaveTest
-
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+	}
+}

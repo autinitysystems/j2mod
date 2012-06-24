@@ -76,15 +76,18 @@ import com.ghgande.j2mod.modbus.Modbus;
 /**
  * Class implementing a <tt>Read MEI Data</tt> request.
  * 
- * @author Julie Haugh (jfh@greenhousepc.com)
+ * @author Julie Haugh (jfh@ghgande.com)
  * @version jamod-1.2rc1-ghpc
+ * 
+ * @author jfhaugh (jfh@ghgande.com)
+ * @version @version@ (@date@)
  */
 public final class ReportSlaveIDRequest extends ModbusRequest {
 
 	/**
 	 * createResponse -- create an empty response for this request.
 	 */
-	public ModbusResponse createResponse() {
+	public ModbusResponse getResponse() {
 		ReportSlaveIDResponse response = null;
 
 		response = new ReportSlaveIDResponse();
@@ -92,20 +95,27 @@ public final class ReportSlaveIDRequest extends ModbusRequest {
 		/*
 		 * Copy any header data from the request.
 		 */
+		response.setHeadless(isHeadless());
 		if (! isHeadless()) {
-			response.setTransactionID(this.getTransactionID());
-			response.setProtocolID(this.getProtocolID());
-		} else {
-			response.setHeadless();
+			response.setTransactionID(getTransactionID());
+			response.setProtocolID(getProtocolID());
 		}
 		
 		/*
 		 * Copy the unit ID and function code.
 		 */
-		response.setUnitID(this.getUnitID());
-		response.setFunctionCode(Modbus.REPORT_SLAVE_ID);
+		response.setUnitID(getUnitID());
+		response.setFunctionCode(getFunctionCode());
 
 		return response;
+	}
+	
+	/**
+	 * The ModbusCoupler doesn't have a means of reporting the slave
+	 * state or ID information.
+	 */
+	public ModbusResponse createResponse() {
+		throw new RuntimeException();
 	}
 
 	/**
@@ -137,6 +147,7 @@ public final class ReportSlaveIDRequest extends ModbusRequest {
 	 */
 	public ReportSlaveIDRequest() {
 		super();
+		
 		setFunctionCode(Modbus.REPORT_SLAVE_ID);
 		
 		/*

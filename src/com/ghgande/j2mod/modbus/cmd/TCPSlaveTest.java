@@ -52,19 +52,18 @@ import com.ghgande.j2mod.modbus.procimg.SimpleRegister;
  * @version 1.2rc1 (09/11/2004)
  */
 public class TCPSlaveTest {
-
-
   public static void main(String[] args) {
 
     ModbusTCPListener listener = null;
     SimpleProcessImage spi = null;
     int port = Modbus.DEFAULT_PORT;
+    int unit = 0;
   
     try {
       if(args != null && args.length ==1) {
         port = Integer.parseInt(args[0]);
       }
-      System.out.println("jModbus Modbus Slave (Server)");
+      System.out.println("j2mod Modbus Slave (Server)");
 
       //1. prepare a process image
       spi = new SimpleProcessImage();
@@ -95,6 +94,7 @@ public class TCPSlaveTest {
       if (Modbus.debug) System.out.println("Listening...");
       listener = new ModbusTCPListener(3);
       listener.setPort(port);
+      listener.setUnit(unit);
       listener.start();
 
     } catch (Exception ex) {

@@ -68,145 +68,185 @@ package com.ghgande.j2mod.modbus.msg;
 
 import java.io.DataInput;
 import java.io.DataOutput;
+import java.io.EOFException;
 import java.io.IOException;
 
 import com.ghgande.j2mod.modbus.Modbus;
 
-
 /**
  * Class implementing a <tt>Read MEI Data</tt> request.
  * 
- * @author Julie Haugh (jfh@ghgande.com)
+ * @author jfhaugh (jfh@ghgande.com)
  * @version jamod-1.2rc1-ghpc
+ * 
+ * @version @version@ (@date@)
  */
-public final class ReadMEIRequest
-    extends ModbusRequest {
+public final class ReadMEIRequest extends ModbusRequest {
 
-  //instance attributes
-  private int m_FieldLevel;
-  private int m_FieldId;
-  
-  /**
-   * Constructs a new <tt>Read MEI Data request</tt>
-   * instance.
-   */
-  public ReadMEIRequest() {
-    super();
-    setFunctionCode(Modbus.READ_MEI);
-    //3 bytes (unit id and function code is excluded)
-    setDataLength(3);
-  }//constructor
+	// instance attributes
+	private int m_SubCode;
+	private int m_FieldLevel;
+	private int m_FieldId;
 
-  /**
-   * Constructs a new <tt>Read MEI Data request</tt>
-   * instance with a given reference and count of coils
-   * (i.e. bits) to be read.
-   * <p>
-   * @param ref the reference number of the register
-   *        to read from.
-   * @param count the number of bits to be read.
-   */
-  public ReadMEIRequest(int level, int id) {
-    super();
-    setFunctionCode(Modbus.READ_MEI);
-    //3 bytes (unit id and function code is excluded)
-    setDataLength(3);
-    setLevel(level);
-    setFieldId(id);
-  }//constructor
+	/**
+	 * Constructs a new <tt>Read MEI Data request</tt> instance.
+	 */
+	public ReadMEIRequest() {
+		super();
 
-  public ModbusResponse createResponse() {
-    ReadMEIResponse response = null;
+		setFunctionCode(Modbus.READ_MEI);
+		m_SubCode = 0x0E;
 
-    response = new ReadMEIResponse();
+		// 3 bytes (unit id and function code is excluded)
+		setDataLength(3);
+	}
 
-    //transfer header data
-    if (! isHeadless()) {
-      response.setTransactionID(this.getTransactionID());
-      response.setProtocolID(this.getProtocolID());
-    } else {
-      response.setHeadless();
-    }
-    response.setUnitID(this.getUnitID());
-    response.setFunctionCode(Modbus.READ_MEI);
-    
-    return response;
-  }//createResponse
+	/**
+	 * Constructs a new <tt>Read MEI Data request</tt> instance with a given
+	 * reference and count of coils (i.e. bits) to be read.
+	 * <p>
+	 * 
+	 * @param ref
+	 *            the reference number of the register to read from.
+	 * @param count
+	 *            the number of bits to be read.
+	 */
+	public ReadMEIRequest(int level, int id) {
+		super();
 
-  /**
-   * Sets the reference of the register to start reading
-   * from with this <tt>ReadCoilsRequest</tt>.
-   * <p>
-   * @param ref the reference of the register
-   *        to start reading from.
-   */
-  public void setLevel(int level) {
-    m_FieldLevel = level;
-  }
+		setFunctionCode(Modbus.READ_MEI);
+		// 3 bytes (unit id and function code is excluded)
+		setDataLength(3);
+		setLevel(level);
+		setFieldId(id);
+	}
 
-  /**
-   * Returns the reference of the register to to start
-   * reading from with this <tt>ReadCoilsRequest</tt>.
-   * <p>
-   * @return the reference of the register
-   *        to start reading from as <tt>int</tt>.
-   */
-  public int getLevel() {
-    return m_FieldLevel;
-  }//getReference
+	public ModbusResponse getResponse() {
+		ReadMEIResponse response = null;
+		
+		/*
+		 * Any other sub-function is an error.
+		 */
+		if (getSubCode() != 0x0E) {
+			IllegalFunctionExceptionResponse error =
+					new IllegalFunctionExceptionResponse();
+			
+			error.setUnitID(getUnitID());
+			error.setFunctionCode(getFunctionCode());
+			
+			return error;
+		}
 
-  /**
-   * Sets the number of bits (i.e. coils) to be read with
-   * this <tt>ReadCoilsRequest</tt>.
-   * <p>
-   * @param count the number of bits to be read.
-   */
-  public void setFieldId(int id) {
-      m_FieldId = id;
-  }//setBitCount
+		response = new ReadMEIResponse();
 
-  /**
-   * Returns the number of bits (i.e. coils) to be
-   * read with this <tt>ReadCoilsRequest</tt>.
-   * <p>
-   * @return the number of bits to be read.
-   */
-  public int getFieldId() {
-    return m_FieldId;
-  }//getBitCount
+		// transfer header data
+		if (! isHeadless()) {
+			response.setTransactionID(getTransactionID());
+			response.setProtocolID(getProtocolID());
+		} else {
+			response.setHeadless();
+		}
+		response.setUnitID(getUnitID());
+		response.setFunctionCode(Modbus.READ_MEI);
 
-  public void writeData(DataOutput dout) throws IOException {
-	  dout.write(getMessage());
-	  
-/*	  if (! isHeadless()) {
-		  dout.writeShort(getTransactionID());
-		  dout.writeShort(getProtocolID());
-		  dout.writeShort(5);
-	  }
-	  dout.write(getUnitID());
-	  dout.write(Modbus.READ_MEI);
-	  dout.writeByte(0xE);
-	  dout.writeByte(m_FieldLevel);
-	  dout.writeByte(m_FieldId); */
-  }//writeData
+		return response;
+	}
 
-  public void readData(DataInput din) throws IOException {
-	  int subCode = din.readUnsignedByte();
-	  
-	  if (subCode != 0xE)
-		  throw new IOException("Invalid MEI Sub-code");
+	/**
+	 * The ModbusCoupler interface doesn't have a method for defining MEI for a
+	 * device.
+	 */
+	public ModbusResponse createResponse() {
+		throw new RuntimeException();
+	}
 
-	  m_FieldLevel = din.readUnsignedByte();
-	  m_FieldId = din.readUnsignedByte();
-  }
-  
-  public byte[] getMessage() {
-	  byte	results[] = new byte[3];
-	  
-	  results[0] = 0x0E;
-	  results[1] = (byte) m_FieldLevel;
-	  results[2] = (byte) m_FieldId;
-	  
-	  return results;
-  }
+	/**
+	 * Gets the MEI subcode associated with this request.
+	 */
+	public int getSubCode() {
+		return m_SubCode;
+	}
+
+	/**
+	 * Sets the reference of the register to start reading from with this
+	 * <tt>ReadCoilsRequest</tt>.
+	 * <p>
+	 * 
+	 * @param ref
+	 *            the reference of the register to start reading from.
+	 */
+	public void setLevel(int level) {
+		m_FieldLevel = level;
+	}
+
+	/**
+	 * Returns the reference of the register to to start reading from with this
+	 * <tt>ReadCoilsRequest</tt>.
+	 * <p>
+	 * 
+	 * @return the reference of the register to start reading from as
+	 *         <tt>int</tt>.
+	 */
+	public int getLevel() {
+		return m_FieldLevel;
+	}
+
+	/**
+	 * Sets the number of bits (i.e. coils) to be read with this
+	 * <tt>ReadCoilsRequest</tt>.
+	 * <p>
+	 * 
+	 * @param count
+	 *            the number of bits to be read.
+	 */
+	public void setFieldId(int id) {
+		m_FieldId = id;
+	}
+
+	/**
+	 * Returns the number of bits (i.e. coils) to be read with this
+	 * <tt>ReadCoilsRequest</tt>.
+	 * <p>
+	 * 
+	 * @return the number of bits to be read.
+	 */
+	public int getFieldId() {
+		return m_FieldId;
+	}
+
+	public void writeData(DataOutput dout) throws IOException {
+		byte results[] = new byte[3];
+
+		results[0] = (byte) m_SubCode;
+		results[1] = (byte) m_FieldLevel;
+		results[2] = (byte) m_FieldId;
+
+		dout.write(results);
+	}
+
+	public void readData(DataInput din) throws IOException {
+		m_SubCode = din.readUnsignedByte();
+
+		if (m_SubCode != 0xE) {
+			try {
+				while (din.readByte() >= 0)
+					;
+			} catch (EOFException x) {
+				// do nothing.
+			}
+			return;
+		}
+		m_FieldLevel = din.readUnsignedByte();
+		m_FieldId = din.readUnsignedByte();
+	}
+
+	public byte[] getMessage() {
+		byte results[] = new byte[3];
+
+		results[0] = (byte) m_SubCode;
+		results[1] = (byte) m_FieldLevel;
+		results[2] = (byte) m_FieldId;
+
+		return results;
+	}
 }

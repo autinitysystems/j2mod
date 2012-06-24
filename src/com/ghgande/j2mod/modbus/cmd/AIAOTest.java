@@ -46,24 +46,34 @@ import com.ghgande.j2mod.modbus.net.TCPMasterConnection;
 import com.ghgande.j2mod.modbus.procimg.SimpleRegister;
 
 /**
- * <p>Class that implements a simple commandline tool which demonstrates
- * how a analog input can be bound with a analog output.
+ * <p>
+ * Class that implements a simple commandline tool which demonstrates how a
+ * analog input can be bound with a analog output.
  * 
- * <p>Note that if you write to a remote I/O with a Modbus protocol stack,
- * it will most likely expect that the communication is <i>kept alive</i>
- * after the first write message.
+ * <p>
+ * Note that if you write to a remote I/O with a Modbus protocol stack, it will
+ * most likely expect that the communication is <i>kept alive</i> after the
+ * first write message.
  * 
- * <p>This can be achieved either by sending any kind of message, or by
- * repeating the write message within a given period of time.
+ * <p>
+ * This can be achieved either by sending any kind of message, or by repeating
+ * the write message within a given period of time.
  * 
- * <p>If the time period is exceeded, then the device might react by turning
- * out all signals of the I/O modules. After this timeout, the device might
- * require a reset message.
+ * <p>
+ * If the time period is exceeded, then the device might react by turning out
+ * all signals of the I/O modules. After this timeout, the device might require
+ * a reset message.
  * 
  * @author Dieter Wimberger
  * @version 1.2rc1 (09/11/2004)
  */
 public class AIAOTest {
+
+	private static void printUsage() {
+		System.out.println("java com.ghgande.j2mod.modbus.cmd.AIAOTest"
+				+ " <address{:<port>} [String]> <register a_in [int16]>"
+				+ " <register a_out [int16]>");
+	}
 
 	public static void main(String[] args) {
 
@@ -78,30 +88,37 @@ public class AIAOTest {
 		int ai_ref = 0;
 		int ao_ref = 0;
 		int port = Modbus.DEFAULT_PORT;
+		int unit_in = 0;
+		int unit_out = 0;
 
+		// 1. Setup the parameters
+		if (args.length < 3) {
+			printUsage();
+			System.exit(1);
+		}
 		try {
 
-			// 1. Setup the parameters
-			if (args.length < 3) {
+			try {
+				String serverAddress = args[0];
+				String parts[] = serverAddress.split(":");
+
+				String address = parts[0];
+				if (parts.length > 1) {
+					port = Integer.parseInt(parts[1]);
+					if (parts.length > 2) {
+						unit_in = unit_out = Integer.parseInt(parts[2]);
+						if (parts.length > 3) {
+							unit_out = Integer.parseInt(parts[3]);
+						}
+					}
+				}
+				addr = InetAddress.getByName(address);
+				ai_ref = Integer.parseInt(args[1]);
+				ao_ref = Integer.parseInt(args[2]);
+			} catch (Exception ex) {
+				ex.printStackTrace();
 				printUsage();
 				System.exit(1);
-			} else {
-				try {
-					String astr = args[0];
-					int idx = astr.indexOf(':');
-					if (idx > 0) {
-						port = Integer.parseInt(astr.substring(idx + 1));
-						astr = astr.substring(0, idx);
-					}
-					addr = InetAddress.getByName(astr);
-					ai_ref = Integer.parseInt(args[1]);
-					ao_ref = Integer.parseInt(args[2]);
-
-				} catch (Exception ex) {
-					ex.printStackTrace();
-					printUsage();
-					System.exit(1);
-				}
 			}
 
 			// 2. Open the connection
@@ -117,8 +134,8 @@ public class AIAOTest {
 			ao_req = new WriteSingleRegisterRequest();
 			ao_req.setReference(ao_ref);
 
-			ai_req.setUnitID(0);
-			ao_req.setUnitID(0);
+			ai_req.setUnitID(unit_in);
+			ao_req.setUnitID(unit_out);
 
 			// 4. Prepare the transactions
 			ai_trans = new ModbusTCPTransaction(con);
@@ -144,7 +161,7 @@ public class AIAOTest {
 					last_out = new_in;
 					if (Modbus.debug)
 						System.out
-								.println("Updated Register with value from Input Register.");
+								.println("Updated Output Register with value from Input Register.");
 				}
 			} while (true);
 
@@ -154,10 +171,5 @@ public class AIAOTest {
 			// 6. Close the connection
 			con.close();
 		}
-	}// main
-
-	private static void printUsage() {
-		System.out.println(
-				"java com.ghgande.j2mod.modbus.cmd.AIAOTest <address{:<port>} [String]> <register a_in [int16]> <register a_out [int16]>");
 	}
 }

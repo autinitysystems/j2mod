@@ -43,100 +43,104 @@ import com.ghgande.j2mod.modbus.msg.ReadInputRegistersRequest;
 import com.ghgande.j2mod.modbus.msg.ReadInputRegistersResponse;
 import com.ghgande.j2mod.modbus.net.TCPMasterConnection;
 
-
 /**
- * Class that implements a simple commandline
- * tool for reading an analog input.
- *
+ * Class that implements a simple commandline tool for reading an analog input.
+ * 
  * @author Dieter Wimberger
  * @version 1.2rc1 (09/11/2004)
  */
 public class AITest {
 
-  public static void main(String[] args) {
+	public static void main(String[] args) {
 
-    InetAddress addr = null;
-    TCPMasterConnection con = null;
-    ModbusRequest req = null;
-    ModbusTransaction trans = null;
-    int ref = 0;
-    int count = 0;
-    int repeat = 1;
-    int port = Modbus.DEFAULT_PORT;
+		InetAddress addr = null;
+		TCPMasterConnection con = null;
+		ModbusRequest req = null;
+		ModbusTransaction trans = null;
+		int ref = 0;
+		int count = 0;
+		int repeat = 1;
+		int port = Modbus.DEFAULT_PORT;
+		int unit = 0;
 
-    try {
+		try {
 
-      //1. Setup parameters
-      if (args.length < 3) {
-        printUsage();
-        System.exit(1);
-      } else {
-        try {
-          String astr = args[0];
-          int idx = astr.indexOf(':');
-          if(idx > 0) {
-            port = Integer.parseInt(astr.substring(idx+1));
-            astr = astr.substring(0,idx);
-          }
-          addr = InetAddress.getByName(astr);
-          ref = Integer.parseInt(args[1]);
-          count = Integer.parseInt(args[2]);
-          if(args.length == 4) {
-            repeat = Integer.parseInt(args[3]);
-          }
-        } catch (Exception ex) {
-          ex.printStackTrace();
-          printUsage();
-          System.exit(1);
-        }
-      }
+			// 1. Setup parameters
+			if (args.length < 3) {
+				printUsage();
+				System.exit(1);
+			} else {
+				try {
+					String serverAddress = args[0];
+					String parts[] = serverAddress.split(":");
+					
+					String address = parts[0];
+					if (parts.length > 1) {
+						port = Integer.parseInt(parts[1]);
+						if (parts.length > 2)
+							unit = Integer.parseInt(parts[2]);
+					}
+					addr = InetAddress.getByName(address);
+					ref = Integer.parseInt(args[1]);
+					count = Integer.parseInt(args[2]);
+					if (args.length == 4) {
+						repeat = Integer.parseInt(args[3]);
+					}
+				} catch (Exception ex) {
+					ex.printStackTrace();
+					printUsage();
+					System.exit(1);
+				}
+			}
 
-      //2. Open the connection
-      con = new TCPMasterConnection(addr);
-      con.setPort(port);
-      con.connect();
+			// 2. Open the connection
+			con = new TCPMasterConnection(addr);
+			con.setPort(port);
+			con.connect();
 
-      if (Modbus.debug) System.out.println("Connected to " + addr.toString() + ":" + con.getPort());
+			if (Modbus.debug)
+				System.out.println("Connected to " + addr.toString() + ":"
+						+ con.getPort());
 
-      //3. Prepare the request
-      req = new ReadInputRegistersRequest(ref, count);
-      req.setUnitID(0);
-      if (Modbus.debug) System.out.println("Request: " + req.getHexMessage());
+			// 3. Prepare the request
+			req = new ReadInputRegistersRequest(ref, count);
+			req.setUnitID(unit);
+			if (Modbus.debug)
+				System.out.println("Request: " + req.getHexMessage());
 
-      //4. Prepare the transaction
-      trans = new ModbusTCPTransaction(con);
-      trans.setRequest(req);
+			// 4. Prepare the transaction
+			trans = new ModbusTCPTransaction(con);
+			trans.setRequest(req);
 
-      //5. Execute the transaction repeat times
-      int k = 0;
-      do {
-        trans.execute();
-     
-        ReadInputRegistersResponse res = (ReadInputRegistersResponse) trans.getResponse();
-        if (Modbus.debug)
-          System.out.println("Response: " +
-              res.getHexMessage()
-          );
+			// 5. Execute the transaction repeat times
+			int k = 0;
+			do {
+				trans.execute();
 
-        for (int n = 0; n < res.getWordCount(); n++) {
-          System.out.println("Word " + n + "=" + res.getRegisterValue(n));
-        }
+				ReadInputRegistersResponse res = (ReadInputRegistersResponse) trans
+						.getResponse();
+				if (Modbus.debug)
+					System.out.println("Response: " + res.getHexMessage());
 
-        k++;
-      } while (k < repeat);
+				for (int n = 0; n < res.getWordCount(); n++) {
+					System.out.println("Word " + n + "="
+							+ res.getRegisterValue(n));
+				}
 
-      //6. Close the connection
-      con.close();
+				k++;
+			} while (k < repeat);
 
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-  }//main
+			// 6. Close the connection
+			con.close();
 
-  private static void printUsage() {
-    System.out.println(
-        "java com.ghgande.j2mod.modbus.cmd.AITest <address{:port} [String]> <register [int16]> <wordcount [int16]> {<repeat [int]>}"
-    );
-  }//printUsage
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+	}// main
 
-}//class AITest
+	private static void printUsage() {
+		System.out
+				.println("java com.ghgande.j2mod.modbus.cmd.AITest <address{:port} [String]> <register [int16]> <wordcount [int16]> {<repeat [int]>}");
+	}// printUsage
+
+}// class AITest

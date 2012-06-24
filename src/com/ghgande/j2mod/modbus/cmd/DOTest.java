@@ -42,104 +42,111 @@ import com.ghgande.j2mod.modbus.msg.ModbusRequest;
 import com.ghgande.j2mod.modbus.msg.WriteCoilRequest;
 import com.ghgande.j2mod.modbus.net.TCPMasterConnection;
 
-
 /**
- * Class that implements a simple commandline
- * tool for writing to a digital output.
  * <p>
- * Note that if you write to a remote I/O with
- * a Modbus protocol stack, it will most likely
- * expect that the communication is <i>kept alive</i>
- * after the first write message.<br>
- * This can be achieved either by sending any kind of
- * message, or by repeating the write message within a
- * given period of time.<br>
- * If the time period is exceeded, then the device might
- * react by turning pos all signals of the I/O modules.
- * After this timeout, the device might require a
- * reset message.
- *
+ * Class that implements a simple commandline tool for writing to a digital
+ * output.
+ * 
+ * <p>
+ * Note that if you write to a remote I/O with a Modbus protocol stack, it will
+ * most likely expect that the communication is <i>kept alive</i> after the
+ * first write message.
+ * 
+ * <p>
+ * This can be achieved either by sending any kind of message, or by repeating
+ * the write message within a given period of time.
+ * 
+ * <p>
+ * If the time period is exceeded, then the device might react by turning off
+ * all signals of the I/O modules. After this timeout, the device might require
+ * a reset message.
+ * 
  * @author Dieter Wimberger
  * @version 1.2rc1 (09/11/2004)
  */
 public class DOTest {
 
-  public static void main(String[] args) {
+	private static void printUsage() {
+		System.out
+				.println("java com.ghgande.j2mod.modbus.cmd.DOTest"
+						+ " <address{:<port>} [String]>"
+						+ " <register [int16]> <state [boolean]>"
+						+ " {<repeat [int]>}");
+	}
 
-    InetAddress addr = null;
-    TCPMasterConnection con = null;
-    ModbusRequest req = null;
-    ModbusTransaction trans = null;
-    int ref = 0;
-    boolean count = false;
-    int repeat = 1;
-    int port = Modbus.DEFAULT_PORT;
+	public static void main(String[] args) {
+		InetAddress addr = null;
+		TCPMasterConnection con = null;
+		ModbusRequest req = null;
+		ModbusTransaction trans = null;
+		int ref = 0;
+		boolean value = false;
+		int repeat = 1;
+		int port = Modbus.DEFAULT_PORT;
+		int unit = 0;
 
-    try {
+		// 1. Setup the parameters
+		if (args.length < 3) {
+			printUsage();
+			System.exit(1);
+		}
+		try {
+			try {
+				String serverAddress = args[0];
+				String parts[] = serverAddress.split(":");
 
-      //1. Setup the parameters
-      if (args.length < 3) {
-        printUsage();
-        System.exit(1);
-      } else {
-        try {
-          String astr = args[0];
-          int idx = astr.indexOf(':');
-          if(idx > 0) {
-            port = Integer.parseInt(astr.substring(idx+1));
-            astr = astr.substring(0,idx);
-          }
-          addr = InetAddress.getByName(astr);
-          ref = Integer.parseInt(args[1]);
-          count = "true".equals(args[2]);         
-          if (args.length == 4) {
-            repeat = Integer.parseInt(args[3]);
-          }
-        } catch (Exception ex) {
-          ex.printStackTrace();
-          printUsage();
-          System.exit(1);
-        }
-      }
-      //2. Open the connection
-      con = new TCPMasterConnection(addr);
-      con.setPort(port);
-      con.connect();
+				String address = parts[0];
+				if (parts.length > 1) {
+					port = Integer.parseInt(parts[1]);
+					if (parts.length > 2)
+						unit = Integer.parseInt(parts[2]);
+				}
+				addr = InetAddress.getByName(address);
 
-      if (Modbus.debug) System.out.println("Connected to " + addr.toString() + ":" + con.getPort());
+				ref = Integer.parseInt(args[1]);
+				value = "true".equals(args[2]);
+				if (args.length == 4) {
+					repeat = Integer.parseInt(args[3]);
+				}
+			} catch (Exception ex) {
+				ex.printStackTrace();
+				printUsage();
+				System.exit(1);
+			}
 
-      //3. Prepare the request
-      req = new WriteCoilRequest(ref, count);
-      req.setUnitID(0);
-      if (Modbus.debug) System.out.println("Request: " + req.getHexMessage());
+			// 2. Open the connection
+			con = new TCPMasterConnection(addr);
+			con.setPort(port);
+			con.connect();
 
-      //4. Prepare the transaction
-      trans = new ModbusTCPTransaction(con);
-      trans.setRequest(req);
+			if (Modbus.debug)
+				System.out.println("Connected to " + addr.toString() + ":"
+						+ con.getPort());
 
-      //5. Execute the transaction repeat times
-      int k = 0;
-      do {
-        trans.execute();
+			// 3. Prepare the request
+			req = new WriteCoilRequest(ref, value);
+			req.setUnitID(unit);
+			if (Modbus.debug)
+				System.out.println("Request: " + req.getHexMessage());
 
-        if (Modbus.debug) System.out.println("Response: " +
-            trans.getResponse().getHexMessage()
-        );
-        k++;
-      } while (k < repeat);
+			// 4. Prepare the transaction
+			trans = new ModbusTCPTransaction(con);
+			trans.setRequest(req);
 
-      //6. Close the connection
-      con.close();
+			// 5. Execute the transaction repeat times
+			for (int count = 0; count < repeat; count++) {
+				trans.execute();
 
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-  }//main
+				if (Modbus.debug)
+					System.out.println("Response: "
+							+ trans.getResponse().getHexMessage());
+			}
 
-  private static void printUsage() {
-    System.out.println(
-        "java com.ghgande.j2mod.modbus.cmd.DOTest <address{:<port>} [String]> <register [int16]> <state [boolean]> {<repeat [int]>}"
-    );
-  }//printUsage
+			// 6. Close the connection
+			con.close();
 
-}//class DOTest
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+	}
+}

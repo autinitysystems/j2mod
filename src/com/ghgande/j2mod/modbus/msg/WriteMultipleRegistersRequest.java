@@ -42,13 +42,12 @@ import com.ghgande.j2mod.modbus.ModbusCoupler;
 import com.ghgande.j2mod.modbus.io.NonWordDataHandler;
 import com.ghgande.j2mod.modbus.procimg.*;
 
-
 /**
- * Class implementing a <tt>ReadMultipleRegistersRequest</tt>.
- * The implementation directly correlates with the class 0
- * function <i>write multiple registers (FC 16)</i>. It
- * encapsulates the corresponding request message.
- *
+ * Class implementing a <tt>ReadMultipleRegistersRequest</tt>. The
+ * implementation directly correlates with the class 0 function <i>write
+ * multiple registers (FC 16)</i>. It encapsulates the corresponding request
+ * message.
+ * 
  * @author Dieter Wimberger
  * @version 1.2rc1 (09/11/2004)
  */
@@ -59,197 +58,214 @@ public final class WriteMultipleRegistersRequest extends ModbusRequest {
 	private NonWordDataHandler m_NonWordDataHandler = null;
 
 	/**
-	 * Constructs a new <tt>WriteMultipleRegistersRequest</tt>
-	 * instance.
+	 * Constructs a new <tt>WriteMultipleRegistersRequest</tt> instance.
 	 */
 	public WriteMultipleRegistersRequest() {
 		setFunctionCode(Modbus.WRITE_MULTIPLE_REGISTERS);
 	}
 
 	/**
-	 * Constructs a new <tt>WriteMultipleRegistersRequest</tt>
-	 * instance with a given starting reference and values to be written.
+	 * Constructs a new <tt>WriteMultipleRegistersRequest</tt> instance with a
+	 * given starting reference and values to be written.
 	 * <p>
-	 * @param first -- the address of the first register
-	 *        to write to.
-	 * @param registers -- the registers to be written.
+	 * 
+	 * @param first
+	 *            -- the address of the first register to write to.
+	 * @param registers
+	 *            -- the registers to be written.
 	 */
 	public WriteMultipleRegistersRequest(int first, Register[] registers) {
 		setFunctionCode(Modbus.WRITE_MULTIPLE_REGISTERS);
-		
+
 		setReference(first);
 		setRegisters(registers);
 	}
 
+	public ModbusResponse getResponse() {
+		WriteMultipleRegistersResponse response = new WriteMultipleRegistersResponse();
+
+		response.setHeadless(isHeadless());
+		if (!isHeadless()) {
+			response.setProtocolID(getProtocolID());
+			response.setTransactionID(getTransactionID());
+		}
+		response.setFunctionCode(getFunctionCode());
+		response.setUnitID(getUnitID());
+
+		return response;
+	}
+
+	/**
+	 * createResponse() must be able to handle the case where the word data that
+	 * is in the response is actually non-word data. That is, where the slave
+	 * device has data which are not actually <tt>short</tt> values in the range
+	 * of registers being processed.
+	 */
 	public ModbusResponse createResponse() {
 		WriteMultipleRegistersResponse response = null;
 
 		if (m_NonWordDataHandler == null) {
 			Register[] regs = null;
-			//1. get process image
-			ProcessImage procimg = ModbusCoupler.getReference().getProcessImage();
-			//2. get registers
+			// 1. get process image
+			ProcessImage procimg = ModbusCoupler.getReference()
+					.getProcessImage();
+			// 2. get registers
 			try {
-				//TODO: realize a setRegisterRange()?
-				regs = procimg.getRegisterRange(this.getReference(), this.getWordCount());
-				//3. set Register values
-				for (int i = 0; i < regs.length; i++) {
+				regs = procimg.getRegisterRange(getReference(), getWordCount());
+				// 3. set Register values
+				for (int i = 0; i < regs.length; i++)
 					regs[i].setValue(this.getRegister(i).toBytes());
-				}
 			} catch (IllegalAddressException iaex) {
 				return createExceptionResponse(Modbus.ILLEGAL_ADDRESS_EXCEPTION);
 			}
-			response = new WriteMultipleRegistersResponse(this.getReference(), regs.length);
+			response = (WriteMultipleRegistersResponse) getResponse();
+			
+			response.setReference(getReference());
+			response.setWordCount(getWordCount());
 		} else {
 			int result = m_NonWordDataHandler.commitUpdate();
 			if (result > 0) {
 				return createExceptionResponse(result);
 			}
-			response = new WriteMultipleRegistersResponse(
-					this.getReference(),
-					m_NonWordDataHandler.getWordCount()
-			);
+			response = (WriteMultipleRegistersResponse) getResponse();
+			
+			response.setReference(getReference());
+			response.setWordCount(m_NonWordDataHandler.getWordCount());
 		}
-		//transfer header data
-		if (! isHeadless()) {
-			response.setTransactionID(getTransactionID());
-			response.setProtocolID(getProtocolID());
-		} else {
-			response.setHeadless();
-		}
-		response.setUnitID(getUnitID());
-		response.setFunctionCode(getFunctionCode());
-		
+
 		return response;
-	}//createResponse
+	}
 
 	/**
-	 * Sets the reference of the register to writing to
-	 * with this <tt>WriteMultipleRegistersRequest</tt>.
+	 * Sets the reference of the register to writing to with this
+	 * <tt>WriteMultipleRegistersRequest</tt>.
 	 * <p>
-	 * @param ref the reference of the register
-	 *        to start writing to as <tt>int</tt>.
+	 * 
+	 * @param ref
+	 *            the reference of the register to start writing to as
+	 *            <tt>int</tt>.
 	 */
 	public void setReference(int ref) {
 		m_Reference = ref;
-	}//setReference
+	}
 
 	/**
-	 * Returns the reference of the register to start
-	 * writing to with this
+	 * Returns the reference of the register to start writing to with this
 	 * <tt>WriteMultipleRegistersRequest</tt>.
 	 * <p>
-	 * @return the reference of the register
-	 *        to start writing to as <tt>int</tt>.
+	 * 
+	 * @return the reference of the register to start writing to as <tt>int</tt>
+	 *         .
 	 */
 	public int getReference() {
 		return m_Reference;
-	}//getReference
+	}
 
 	/**
 	 * Sets the registers to be written with this
 	 * <tt>WriteMultipleRegistersRequest</tt>.
 	 * <p>
-	 * @param registers the registers to be written
-	 *        as <tt>Register[]</tt>.
+	 * 
+	 * @param registers
+	 *            the registers to be written as <tt>Register[]</tt>.
 	 */
 	public void setRegisters(Register[] registers) {
 		m_Registers = registers;
-	}//setRegisters
-
+	}
 
 	/**
 	 * Returns the registers to be written with this
 	 * <tt>WriteMultipleRegistersRequest</tt>.
 	 * <p>
+	 * 
 	 * @return the registers to be written as <tt>Register[]</tt>.
 	 */
 	public Register[] getRegisters() {
 		return m_Registers;
-	}//getRegisters
+	}
 
 	/**
-	 * Returns the <tt>Register</tt> at
-	 * the given position (relative to the reference
-	 * used in the request).
-	 * <p>
-	 * @param index the relative index of the <tt>Register</tt>.
-	 *
+	 * Returns the <tt>Register</tt> at the given position (relative to the
+	 * reference used in the request).
+	 * 
+	 * @param index
+	 *            the relative index of the <tt>Register</tt>.
+	 * 
 	 * @return the register as <tt>Register</tt>.
-	 *
-	 * @throws IndexOutOfBoundsException if
-	 *         the index is out of bounds.
+	 * 
+	 * @throws IndexOutOfBoundsException
+	 *             if the index is out of bounds.
 	 */
-	public Register getRegister(int index)
-	throws IndexOutOfBoundsException {
+	public Register getRegister(int index) throws IndexOutOfBoundsException {
+		if (index < 0)
+			throw new IndexOutOfBoundsException(index + " < 0");
 
-		if (index >= getWordCount()) {
-			throw new IndexOutOfBoundsException();
-		} else {
+		if (index >= getWordCount())
+			throw new IndexOutOfBoundsException(index + " > " + getWordCount());
+
 			return m_Registers[index];
-		}
-	}//getRegister
-
+	}
 
 	/**
-	 * Returns the value of the register at
-	 * the given position (relative to the reference
-	 * used in the request) interpreted as unsigned short.
+	 * Returns the value of the register at the given position (relative to the
+	 * reference used in the request) interpreted as unsigned short.
 	 * <p>
-	 * @param index the relative index of the register
-	 *        for which the value should be retrieved.
-	 *
+	 * 
+	 * @param index
+	 *            the relative index of the register for which the value should
+	 *            be retrieved.
+	 * 
 	 * @return the value as <tt>int</tt>.
-	 *
-	 * @throws IndexOutOfBoundsException if
-	 *         the index is out of bounds.
+	 * 
+	 * @throws IndexOutOfBoundsException
+	 *             if the index is out of bounds.
 	 */
-	public int getRegisterValue(int index)
-	throws IndexOutOfBoundsException {
-		return m_Registers[index].toUnsignedShort();
-	}//getRegisterValue
+	public int getRegisterValue(int index) throws IndexOutOfBoundsException {
+		return getRegister(index).toUnsignedShort();
+	}
 
 	/**
-	 * Returns the number of bytes representing the
-	 * values to be written.
+	 * Returns the number of bytes representing the values to be written.
 	 * <p>
-	 * @return the number of bytes to be written
-	 *         as <tt>int</tt>.
+	 * 
+	 * @return the number of bytes to be written as <tt>int</tt>.
 	 */
 	public int getByteCount() {
 		return getWordCount() * 2;
-	}//getByteCount
+	}
 
 	/**
 	 * Returns the number of words to be written.
-	 * <p>
-	 * @return the number of words to be written
-	 *         as <tt>int</tt>.
+	 * 
+	 * @return the number of words to be written as <tt>int</tt>.
 	 */
 	public int getWordCount() {
 		if (m_Registers == null)
 			return 0;
-		
+
 		return m_Registers.length;
-	}//getWordCount
+	}
 
 	/**
-	 * Sets a non word data handler.
-	 *
-	 * @param dhandler a  <tt>NonWordDataHandler</tt> instance.
+	 * Sets a non word data handler.  A non-word data handler is responsible
+	 * for converting words from a Modbus packet into the non-word values
+	 * associated with the actual device's registers.
+	 * 
+	 * @param dhandler
+	 *            a <tt>NonWordDataHandler</tt> instance.
 	 */
 	public void setNonWordDataHandler(NonWordDataHandler dhandler) {
 		m_NonWordDataHandler = dhandler;
-	}//setNonWordDataHandler
+	}
 
 	/**
 	 * Returns the actual non word data handler.
-	 *
+	 * 
 	 * @return the actual <tt>NonWordDataHandler</tt>.
 	 */
 	public NonWordDataHandler getNonWordDataHandler() {
 		return m_NonWordDataHandler;
-	}//getNonWordDataHandler
+	}// getNonWordDataHandler
 
 	public void writeData(DataOutput output) throws IOException {
 		byte data[] = getMessage();
@@ -267,13 +283,13 @@ public final class WriteMultipleRegistersRequest extends ModbusRequest {
 		if (m_NonWordDataHandler == null) {
 			byte buffer[] = new byte[byteCount];
 			input.readFully(buffer, 0, byteCount);
-			
-			int	offset = 0;
+
+			int offset = 0;
 			m_Registers = new Register[registerCount];
-			
+
 			for (int register = 0; register < registerCount; register++) {
-				m_Registers[register] = new SimpleRegister(
-						buffer[offset], buffer[offset + 1]);
+				m_Registers[register] = new SimpleRegister(buffer[offset],
+						buffer[offset + 1]);
 				offset += 2;
 			}
 		} else {
@@ -282,13 +298,13 @@ public final class WriteMultipleRegistersRequest extends ModbusRequest {
 	}
 
 	public byte[] getMessage() {
-		int	len = 5;
+		int len = 5;
 
 		if (m_Registers != null)
 			len += m_Registers.length * 2;
 
 		byte result[] = new byte[len];
-		int	registerCount = m_Registers != null ? m_Registers.length:0;
+		int registerCount = m_Registers != null ? m_Registers.length : 0;
 
 		result[0] = (byte) ((m_Reference >> 8) & 0xff);
 		result[1] = (byte) (m_Reference & 0xff);
@@ -299,7 +315,7 @@ public final class WriteMultipleRegistersRequest extends ModbusRequest {
 		int offset = 5;
 
 		if (m_NonWordDataHandler == null) {
-			for (int i = 0;i < registerCount;i++) {
+			for (int i = 0; i < registerCount; i++) {
 				byte bytes[] = m_Registers[i].toBytes();
 				result[offset++] = bytes[0];
 				result[offset++] = bytes[1];

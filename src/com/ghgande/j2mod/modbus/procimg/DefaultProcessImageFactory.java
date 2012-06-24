@@ -34,102 +34,128 @@
 package com.ghgande.j2mod.modbus.procimg;
 
 /**
- * The default ProcessImageFactory.
- *
+ * The default ProcessImageFactory. It creates a new <tt>SimpleProcessImage</tt>
+ * each time <tt>createProcessImageImplementation()</tt> is invoked.
+ * 
  * @author Dieter Wimberger
  * @version 1.2rc1 (09/11/2004)
+ * 
+ * @author jfhaugh
+ * @version @version@ (@date@)
  */
-public class DefaultProcessImageFactory
-    implements ProcessImageFactory {
+public class DefaultProcessImageFactory implements ProcessImageFactory {
 
-  /**
-   * Returns a new SimpleProcessImage instance.
-   *
-   * @return a SimpleProcessImage instance.
-   */
-  public ProcessImageImplementation createProcessImageImplementation() {
-    return new SimpleProcessImage();
-  }//createProcessImageImplementation
+	/**
+	 * Returns a new SimpleProcessImage instance.
+	 * 
+	 * @return a SimpleProcessImage instance.
+	 */
+	public ProcessImageImplementation createProcessImageImplementation() {
+		return new SimpleProcessImage();
+	}
 
-  /**
-   * Returns a new SimpleDigitalIn instance.
-   *
-   * @return a SimpleDigitalIn instance.
-   */
-  public DigitalIn createDigitalIn() {
-    return new SimpleDigitalIn();
-  }//createDigitalIn
+	/**
+	 * Returns a new SimpleDigitalIn instance.
+	 * 
+	 * @return a SimpleDigitalIn instance.
+	 */
+	public DigitalIn createDigitalIn() {
+		return new SimpleDigitalIn();
+	}
 
-  /**
-   * Returns a new DigitalIn instance with the given state.
-   *
-   * @param state true if set, false otherwise.
-   * @return a SimpleDigitalIn instance.
-   */
-  public DigitalIn createDigitalIn(boolean state) {
-    return new SimpleDigitalIn(state);
-  }//createDigitalIn
+	/**
+	 * Returns a new DigitalIn instance with the given state.
+	 * 
+	 * @param state
+	 *            true if set, false otherwise.
+	 * @return a SimpleDigitalIn instance.
+	 */
+	public DigitalIn createDigitalIn(boolean state) {
+		return new SimpleDigitalIn(state);
+	}
 
-  /**
-   * Returns a new SimpleDigitalOut instance.
-   *
-   * @return a SimpleDigitalOut instance.
-   */
-  public DigitalOut createDigitalOut() {
-    return new SimpleDigitalOut();
-  }//createDigitalOut
+	/**
+	 * Returns a new SimpleDigitalOut instance.
+	 * 
+	 * @return a SimpleDigitalOut instance.
+	 */
+	public DigitalOut createDigitalOut() {
+		return new SimpleDigitalOut();
+	}
 
-  /**
-   * Returns a new DigitalOut instance with the
-   * given state.
-   *
-   * @param b true if set, false otherwise.
-   * @return a SimpleDigitalOut instance.
-   */
-  public DigitalOut createDigitalOut(boolean b) {
-    return new SimpleDigitalOut(b);
-  }//createDigitalOut
+	/**
+	 * Returns a new DigitalOut instance with the given state.
+	 * 
+	 * @param b
+	 *            true if set, false otherwise.
+	 * @return a SimpleDigitalOut instance.
+	 */
+	public DigitalOut createDigitalOut(boolean b) {
+		return new SimpleDigitalOut(b);
+	}
 
-  /**
-   * Returns a new SimpleInputRegister instance.
-   *
-   * @return a SimpleInputRegister instance.
-   */
-  public InputRegister createInputRegister() {
-    return new SimpleInputRegister();
-  }//createSimpleInputRegister
+	/**
+	 * Returns a new SimpleInputRegister instance.
+	 * 
+	 * @return a SimpleInputRegister instance.
+	 */
+	public InputRegister createInputRegister() {
+		return new SimpleInputRegister();
+	}
 
-  /**
-   * Returns a new InputRegister instance with a
-   * given value.
-   *
-   * @param b1 the first <tt>byte</tt>.
-   * @param b2 the second <tt>byte</tt>.
-   * @return an InputRegister instance.
-   */
-  public InputRegister createInputRegister(byte b1, byte b2) {
-    return new SimpleInputRegister(b1, b2);
-  }//createInputRegister
+	/**
+	 * Returns a new InputRegister instance with a given value.
+	 * 
+	 * @param value
+	 *            the value of the register as an <tt>int</tt>
+	 * 
+	 * @return an InputRegister instance.
+	 */
+	public InputRegister createInputRegister(int value) {
+		return new SimpleInputRegister(value);
+	}
 
-  /**
-   * Creates a new SimpleRegister instance.
-   *
-   * @return a SimpleRegister instance.
-   */
-  public Register createRegister() {
-    return new SimpleRegister();
-  }//createRegister
+	/**
+	 * Returns a new InputRegister instance with a given value.
+	 * 
+	 * @param b1
+	 *            the first <tt>byte</tt>.
+	 * @param b2
+	 *            the second <tt>byte</tt>.
+	 * @return an InputRegister instance.
+	 */
+	public InputRegister createInputRegister(byte b1, byte b2) {
+		return new SimpleInputRegister(b1, b2);
+	}
 
-  /**
-   * Returns a new Register instance with a
-   * given value.
-   *
-   * @param b1 the first <tt>byte</tt>.
-   * @param b2 the second <tt>byte</tt>.
-   * @return a Register instance.
-   */
-  public Register createRegister(byte b1, byte b2) {
-    return new SimpleRegister(b1, b2);
-  }//createRegister
+	/**
+	 * Creates a new SimpleRegister instance.
+	 * 
+	 * @return a SimpleRegister instance.
+	 */
+	public Register createRegister() {
+		return new SimpleRegister();
+	}
 
-}//class DefaultProcessImageFactory
+	/**
+	 * Creates a new SimpleRegister instance.
+	 * 
+	 * @return a SimpleRegister instance.
+	 */
+	public Register createRegister(int value) {
+		return new SimpleRegister(value);
+	}
+
+	/**
+	 * Returns a new Register instance with a given value.
+	 * 
+	 * @param b1
+	 *            the first <tt>byte</tt>.
+	 * @param b2
+	 *            the second <tt>byte</tt>.
+	 * @return a Register instance.
+	 */
+	public Register createRegister(byte b1, byte b2) {
+		return new SimpleRegister(b1, b2);
+	}
+}

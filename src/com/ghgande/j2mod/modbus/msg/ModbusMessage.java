@@ -40,114 +40,103 @@ import com.ghgande.j2mod.modbus.io.Transportable;
 
 /**
  * Interface defining a ModbusMessage.
- *
+ * 
  * @author Dieter Wimberger
  * @version 1.2rc1 (09/11/2004)
  */
-public interface ModbusMessage
-    extends Transportable {
+public interface ModbusMessage extends Transportable {
 
-  /**
-   * Sets the flag that marks this <tt>ModbusMessage</tt> as headless
-   * (for serial transport).
-   */
-  public void setHeadless();
+	/**
+	 * Check the flag which indicates that this <tt>ModbusMessage</tt> is for a
+	 * headless (serial, or headless networked) connection.
+	 */
+	public boolean isHeadless();
 
-  /**
-   * Returns the transaction identifier of this
-   * <tt>ModbusMessage</tt> as <tt>int</tt>.<br>
-   * The identifier is a 2-byte (short) non negative
-   * integer value valid in the range of 0-65535.
-   * <p>
-   * @return the transaction identifier as <tt>int</tt>.
-   */
-  public int getTransactionID();
+	/**
+	 * Sets the flag that marks this <tt>ModbusMessage</tt> as headless (for
+	 * serial transport).
+	 */
+	public void setHeadless();
 
-  /**
-   * Returns the protocol identifier of this
-   * <tt>ModbusMessage</tt> as <tt>int</tt>.<br>
-   * The identifier is a 2-byte (short) non negative
-   * integer value valid in the range of 0-65535.
-   * <p>
-   * @return the protocol identifier as <tt>int</tt>.
-   */
-  public int getProtocolID();
+	/**
+	 * Returns the transaction identifier of this <tt>ModbusMessage</tt> as
+	 * <tt>int</tt>.
+	 * 
+	 * <p>
+	 * The identifier is a 2-byte (short) non negative integer value valid in
+	 * the range of 0-65535.
+	 * 
+	 * @return the transaction identifier as <tt>int</tt>.
+	 */
+	public int getTransactionID();
 
-  /**
-   * Returns the length of the data appended
-   * after the protocol header.
-   * <p>
-   * @return the data length as <tt>int</tt>.
-   */
-  public int getDataLength();
+	/**
+	 * Returns the protocol identifier of this <tt>ModbusMessage</tt> as
+	 * <tt>int</tt>.
+	 * 
+	 * <p>
+	 * The identifier is a 2-byte (short) non negative integer value valid in
+	 * the range of 0-65535.
+	 * 
+	 * @return the protocol identifier as <tt>int</tt>.
+	 */
+	public int getProtocolID();
 
-  /**
-   * Returns the unit identifier of  this
-   * <tt>ModbusMessage</tt> as <tt>int</tt>.<br>
-   * The identifier is a 1-byte non negative
-   * integer value valid in the range of 0-255.
-   * <p>
-   * @return the unit identifier as <tt>int</tt>.
-   */
-  public int getUnitID();
+	/**
+	 * Returns the length of the data appended after the protocol header.
+	 * <p>
+	 * 
+	 * @return the data length as <tt>int</tt>.
+	 */
+	public int getDataLength();
 
-  /**
-   * Returns the function code of this
-   * <tt>ModbusMessage</tt> as <tt>int</tt>.<br>
-   * The function code is a 1-byte non negative
-   * integer value valid in the range of 0-127.<br>
-   * Function codes are ordered in conformance
-   * classes their values are specified in
-   * <tt>com.ghgande.j2mod.modbus.Modbus</tt>.
-   * <p>
-   * @return the function code as <tt>int</tt>.
-   *
-   * @see com.ghgande.j2mod.modbus.Modbus
-   */
-  public int getFunctionCode();
+	/**
+	 * Returns the unit identifier of this <tt>ModbusMessage</tt> as
+	 * <tt>int</tt>.
+	 * 
+	 * <p>
+	 * The identifier is a 1-byte non negative integer value valid in the range
+	 * of 0-255.
+	 * 
+	 * @return the unit identifier as <tt>int</tt>.
+	 */
+	public int getUnitID();
 
-  /**
-   * Writes this <tt>ModbusMessage</tt> to the
-   * given raw <tt>OutputStream</tt>.
-   * <p>
-   * @param out the <tt>OutputStream</tt> to write to.
-   *
-   * @throws Exception if it fails to write to
-   *         the given <tt>OutputStream</tt>.
-   * @throws Exception if the stream ended
-   *         before all data has been written to it.
-   *
-   public void writeTo(OutputStream out) throws EOFException, IOException;
-   */
+	/**
+	 * Returns the function code of this <tt>ModbusMessage</tt> as <tt>int</tt>.<br>
+	 * The function code is a 1-byte non negative integer value valid in the
+	 * range of 0-127.
+	 * 
+	 * <p>
+	 * Function codes are ordered in conformance classes their values are
+	 * specified in <tt>com.ghgande.j2mod.modbus.Modbus</tt>.
+	 * 
+	 * @return the function code as <tt>int</tt>.
+	 * 
+	 * @see com.ghgande.j2mod.modbus.Modbus
+	 */
+	public int getFunctionCode();
 
-  /**
-   * Returns the <i>raw</i> message as an array of
-   * bytes.
-   * <p>
-   * @return the <i>raw</i> message as <tt>byte[]</tt>.
-   *
-   */
-  public byte[] getMessage();
+	/**
+	 * Returns the <i>raw</i> message as an array of bytes.
+	 * <p>
+	 * 
+	 * @return the <i>raw</i> message as <tt>byte[]</tt>.
+	 * 
+	 */
+	public byte[] getMessage();
 
-  /**
-   * Returns the <i>raw</i> message as <tt>String</tt>
-   * containing a hexadecimal series of bytes.
-   * <br>
-   * This method is specially for debugging purposes,
-   * allowing to log the communication in a manner used
-   * in the specification document.
-   * <p>
-   * @return the <i>raw</i> message as <tt>String</tt>
-   *         containing a hexadecimal series of bytes.
-   *
-   */
-  public String getHexMessage();
-
-  /**
-   * Returns the total length this <tt>ModbusMessage</tt>.
-   * <p>
-   * @return the length as <tt>int</tt>.
-   *
-   public int length();
-   */
-}//interface ModbusMessage
+	/**
+	 * Returns the <i>raw</i> message as <tt>String</tt> containing a
+	 * hexadecimal series of bytes.
+	 * 
+	 * <p>
+	 * This method is specially for debugging purposes, allowing the user to log
+	 * the communication in a manner used in the specification document.
+	 * 
+	 * @return the <i>raw</i> message as <tt>String</tt> containing a
+	 *         hexadecimal series of bytes.
+	 * 
+	 */
+	public String getHexMessage();
+}

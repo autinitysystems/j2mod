@@ -35,58 +35,54 @@ package com.ghgande.j2mod.modbus.procimg;
 
 import com.ghgande.j2mod.modbus.util.Observable;
 
-
 /**
  * Class implementing an observable register.
- *
+ * 
  * @author Dieter Wimberger
  * @version 1.2rc1 (09/11/2004)
  */
-public class ObservableRegister
-    extends Observable
-    implements Register {
+public class ObservableRegister extends Observable implements Register {
 
-  /**
-   * The word (<tt>byte[2]</tt> holding the content of this register.
-   */
-  protected byte[] m_Register = new byte[2];
+	/**
+	 * The word holding the content of this register.
+	 */
+	protected short m_Register;
 
-  public int getValue() {
-    return ((m_Register[0] & 0xff) << 8 | (m_Register[1] & 0xff));
-  }//getValue
+	public int getValue() {
+		return m_Register & 0xFFFF;
+	}
 
-  public final int toUnsignedShort() {
-    return ((m_Register[0] & 0xff) << 8 | (m_Register[1] & 0xff));
-  }//toUnsignedShort
+	public final int toUnsignedShort() {
+		return m_Register & 0xFFFF;
+	}
 
-  public final synchronized void setValue(int v) {
-    m_Register[0] = (byte) (0xff & (v >> 8));
-    m_Register[1] = (byte) (0xff & v);
-    notifyObservers("value");
-  }//setValue
+	public final short toShort() {
+		return m_Register;
+	}
 
-  public final short toShort() {
-    return (short) ((m_Register[0] << 8) | (m_Register[1] & 0xff));
-  }//toShort
+	public byte[] toBytes() {
+		byte[] result = new byte[] { (byte) (m_Register >> 8),
+									 (byte) (m_Register & 0xFF) };
+		return result;
+	}
 
-  public final synchronized void setValue(short s) {
-    m_Register[0] = (byte) (0xff & (s >> 8));
-    m_Register[1] = (byte) (0xff & s);
-    notifyObservers("value");
-  }//setValue
+	public final synchronized void setValue(int v) {
+		m_Register = (short) v;
+		notifyObservers("value");
+	}
 
-  public final synchronized void setValue(byte[] bytes) {
-    if (bytes.length < 2) {
-      throw new IllegalArgumentException();
-    } else {
-      m_Register[0] = bytes[0];
-      m_Register[1] = bytes[1];
-      notifyObservers("value");
-    }
-  }//setValue
+	public final synchronized void setValue(short s) {
+		m_Register = s;
+		notifyObservers("value");
+	}
 
-  public byte[] toBytes() {
-    return m_Register;
-  }//toBytes
-  
-}//class ObservableRegister
+	public final synchronized void setValue(byte[] bytes) {
+		if (bytes.length < 2) {
+			throw new IllegalArgumentException();
+		} else {
+			m_Register = (short) (((short) ((bytes[0] << 8))) |
+						 (((short) (bytes[1])) & 0xFF));
+			notifyObservers("value");
+		}
+	}
+}

@@ -36,238 +36,254 @@ package com.ghgande.j2mod.modbus.procimg;
 import java.util.Vector;
 
 /**
- * Class implementing a simple process image
- * to be able to run unit tests or handle
- * simple cases.
- *
+ * Class implementing a simple process image to be able to run unit tests or
+ * handle simple cases.
+ * 
+ * <p>
+ * The image has a simple linear address space for both analog and digital
+ * objects. There are no "holes" between objects in this model.
+ * 
  * @author Dieter Wimberger
  * @version 1.2rc1 (09/11/2004)
  */
-public class SimpleProcessImage
-    implements ProcessImageImplementation {
+public class SimpleProcessImage implements ProcessImageImplementation {
 
-  //instance attributes
-  protected Vector m_DigitalInputs;
-  protected Vector m_DigitalOutputs;
-  protected Vector m_InputRegisters;
-  protected Vector m_Registers;
-  protected boolean m_Locked = false;
+	// instance attributes
+	protected Vector<DigitalIn> m_DigitalInputs;
+	protected Vector<DigitalOut> m_DigitalOutputs;
+	protected Vector<InputRegister> m_InputRegisters;
+	protected Vector<Register> m_Registers;
+	protected boolean m_Locked = false;
+	protected int m_Unit = 0;
 
-  /**
-   * Constructs a new <tt>SimpleProcessImage</tt> instance.
-   */
-  public SimpleProcessImage() {
-    m_DigitalInputs = new Vector();
-    m_DigitalOutputs = new Vector();
-    m_InputRegisters = new Vector();
-    m_Registers = new Vector();
-  }//SimpleProcessImage
+	/**
+	 * Constructs a new <tt>SimpleProcessImage</tt> instance.
+	 */
+	public SimpleProcessImage() {
+		m_DigitalInputs = new Vector<DigitalIn>();
+		m_DigitalOutputs = new Vector<DigitalOut>();
+		m_InputRegisters = new Vector<InputRegister>();
+		m_Registers = new Vector<Register>();
+	}
 
-  public boolean isLocked() {
-    return m_Locked;
-  }//isLocked
+	/**
+	 * Constructs a new <tt>SimpleProcessImage</tt> instance having a
+	 * (potentially) non-zero unit ID.
+	 */
+	public SimpleProcessImage(int unit) {
+		m_DigitalInputs = new Vector<DigitalIn>();
+		m_DigitalOutputs = new Vector<DigitalOut>();
+		m_InputRegisters = new Vector<InputRegister>();
+		m_Registers = new Vector<Register>();
+		m_Unit = unit;
+	}
 
-  public void setLocked(boolean locked) {
-    m_Locked = locked;
-  }//setLocked
+	/**
+	 * The process image is locked to prevent changes.
+	 * 
+	 * @return whether or not the process image is locked.
+	 */
+	public boolean isLocked() {
+		return m_Locked;
+	}
 
-  public void addDigitalIn(DigitalIn di) {
-    if (!isLocked()) {
-      m_DigitalInputs.addElement(di);
-    }
-  }//addDigitalIn
+	public void setLocked(boolean locked) {
+		m_Locked = locked;
+	}
 
-  public void removeDigitalIn(DigitalIn di) {
-    if (!isLocked()) {
-      m_DigitalInputs.removeElement(di);
-    }
-  }//removeDigitalIn
+	public int getUnitID() {
+		return m_Unit;
+	}
 
-  public void setDigitalIn(int ref, DigitalIn di)
-      throws IllegalAddressException {
-    if (!isLocked()) {
-      try {
-        m_DigitalInputs.setElementAt(di, ref);
-      } catch (IndexOutOfBoundsException ex) {
-        throw new IllegalAddressException();
-      }
-    }
-  }//setDigitalIn
+	public void addDigitalIn(DigitalIn di) {
+		if (!isLocked()) {
+			m_DigitalInputs.addElement(di);
+		}
+	}
 
-  public DigitalIn getDigitalIn(int ref)
-      throws IllegalAddressException {
+	public void removeDigitalIn(DigitalIn di) {
+		if (!isLocked()) {
+			m_DigitalInputs.removeElement(di);
+		}
+	}
 
-    try {
-      return (DigitalIn) m_DigitalInputs.elementAt(ref);
-    } catch (IndexOutOfBoundsException ex) {
-      throw new IllegalAddressException();
-    }
-  }//getDigitalIn
+	public void setDigitalIn(int ref, DigitalIn di)
+			throws IllegalAddressException {
+		if (!isLocked()) {
+			try {
+				m_DigitalInputs.setElementAt(di, ref);
+			} catch (IndexOutOfBoundsException ex) {
+				throw new IllegalAddressException();
+			}
+		}
+	}
 
-  public int getDigitalInCount() {
-    return m_DigitalInputs.size();
-  }//getDigitalInCount
+	public DigitalIn getDigitalIn(int ref) throws IllegalAddressException {
+		try {
+			return m_DigitalInputs.elementAt(ref);
+		} catch (IndexOutOfBoundsException ex) {
+			throw new IllegalAddressException();
+		}
+	}
 
-  public DigitalIn[] getDigitalInRange(int ref, int count) {
-    //ensure valid reference range
-    if (ref < 0 || ref + count > m_DigitalInputs.size()) {
-      throw new IllegalAddressException();
-    } else {
-      DigitalIn[] dins = new DigitalIn[count];
-      for (int i = 0; i < dins.length; i++) {
-        dins[i] = getDigitalIn(ref + i);
-      }
-      return dins;
-    }
-  }//getDigitalInRange
+	public int getDigitalInCount() {
+		return m_DigitalInputs.size();
+	}
 
-  public void addDigitalOut(DigitalOut _do) {
-    if (!isLocked()) {
-      m_DigitalOutputs.addElement(_do);
-    }
-  }//addDigitalOut
+	public DigitalIn[] getDigitalInRange(int ref, int count) {
+		// ensure valid reference range
+		if (ref < 0 || ref + count > m_DigitalInputs.size()) {
+			throw new IllegalAddressException();
+		} else {
+			DigitalIn[] dins = new DigitalIn[count];
+			for (int i = 0; i < dins.length; i++) {
+				dins[i] = getDigitalIn(ref + i);
+			}
+			return dins;
+		}
+	}
 
-  public void removeDigitalOut(DigitalOut _do) {
-    if (!isLocked()) {
-      m_DigitalOutputs.removeElement(_do);
-    }
-  }//removeDigitalOut
+	public void addDigitalOut(DigitalOut _do) {
+		if (!isLocked()) {
+			m_DigitalOutputs.addElement(_do);
+		}
+	}
 
-  public void setDigitalOut(int ref, DigitalOut _do)
-      throws IllegalAddressException {
-    if (!isLocked()) {
-      try {
-        m_DigitalOutputs.setElementAt(_do, ref);
-      } catch (IndexOutOfBoundsException ex) {
-        throw new IllegalAddressException();
-      }
-    }
-  }//setDigitalOut
+	public void removeDigitalOut(DigitalOut _do) {
+		if (!isLocked()) {
+			m_DigitalOutputs.removeElement(_do);
+		}
+	}
 
-  public DigitalOut getDigitalOut(int ref)
-      throws IllegalAddressException {
-    try {
-      return (DigitalOut) m_DigitalOutputs.elementAt(ref);
-    } catch (IndexOutOfBoundsException ex) {
-      throw new IllegalAddressException();
-    }
-  }//getDigitalOut
+	public void setDigitalOut(int ref, DigitalOut _do)
+			throws IllegalAddressException {
+		if (!isLocked()) {
+			try {
+				m_DigitalOutputs.setElementAt(_do, ref);
+			} catch (IndexOutOfBoundsException ex) {
+				throw new IllegalAddressException();
+			}
+		}
+	}
 
-  public int getDigitalOutCount() {
-    return m_DigitalOutputs.size();
-  }//getDigitalOutCount
+	public DigitalOut getDigitalOut(int ref) throws IllegalAddressException {
+		try {
+			return (DigitalOut) m_DigitalOutputs.elementAt(ref);
+		} catch (IndexOutOfBoundsException ex) {
+			throw new IllegalAddressException();
+		}
+	}
 
-  public DigitalOut[] getDigitalOutRange(int ref, int count) {
-    //ensure valid reference range
-    if (ref < 0 || ref + count > m_DigitalOutputs.size()) {
-      throw new IllegalAddressException();
-    } else {
-      DigitalOut[] douts = new DigitalOut[count];
-      for (int i = 0; i < douts.length; i++) {
-        douts[i] = getDigitalOut(ref + i);
-      }
-      return douts;
-    }
-  }//getDigitalOutRange
+	public int getDigitalOutCount() {
+		return m_DigitalOutputs.size();
+	}
 
-  public void addInputRegister(InputRegister reg) {
-    if (!isLocked()) {
-      m_InputRegisters.addElement(reg);
-    }
-  }//addInputRegister
+	public DigitalOut[] getDigitalOutRange(int ref, int count) {
+		// ensure valid reference range
+		if (ref < 0 || ref + count > m_DigitalOutputs.size()) {
+			throw new IllegalAddressException();
+		} else {
+			DigitalOut[] douts = new DigitalOut[count];
+			for (int i = 0; i < douts.length; i++) {
+				douts[i] = getDigitalOut(ref + i);
+			}
+			return douts;
+		}
+	}
 
-  public void removeInputRegister(InputRegister reg) {
-    if (!isLocked()) {
-      m_InputRegisters.removeElement(reg);
-    }
-  }//removeInputRegister
+	public void addInputRegister(InputRegister reg) {
+		if (!isLocked()) {
+			m_InputRegisters.addElement(reg);
+		}
+	}
 
-  public void setInputRegister(int ref, InputRegister reg)
-      throws IllegalAddressException {
-    if (!isLocked()) {
-      try {
-        m_InputRegisters.setElementAt(reg, ref);
-      } catch (IndexOutOfBoundsException ex) {
-        throw new IllegalAddressException();
-      }
-    }
-  }//setInputRegister
+	public void removeInputRegister(InputRegister reg) {
+		if (!isLocked()) {
+			m_InputRegisters.removeElement(reg);
+		}
+	}
 
-  public InputRegister getInputRegister(int ref)
-      throws IllegalAddressException {
+	public void setInputRegister(int ref, InputRegister reg)
+			throws IllegalAddressException {
+		if (!isLocked()) {
+			try {
+				m_InputRegisters.setElementAt(reg, ref);
+			} catch (IndexOutOfBoundsException ex) {
+				throw new IllegalAddressException();
+			}
+		}
+	}
 
-    try {
-      return (InputRegister) m_InputRegisters.elementAt(ref);
-    } catch (IndexOutOfBoundsException ex) {
-      throw new IllegalAddressException();
-    }
-  }//getInputRegister
+	public InputRegister getInputRegister(int ref)
+			throws IllegalAddressException {
 
-  public int getInputRegisterCount() {
-    return m_InputRegisters.size();
-  }//getInputRegisterCount
+		try {
+			return m_InputRegisters.elementAt(ref);
+		} catch (IndexOutOfBoundsException ex) {
+			throw new IllegalAddressException();
+		}
+	}
 
-  public InputRegister[] getInputRegisterRange(int ref, int count) {
-    //ensure valid reference range
-    if (ref < 0 || ref + count > m_InputRegisters.size()) {
-      throw new IllegalAddressException();
-    } else {
-      InputRegister[] iregs = new InputRegister[count];
-      for (int i = 0; i < iregs.length; i++) {
-        iregs[i] = getInputRegister(ref + i);
-      }
-      return iregs;
-    }
-  }//getInputRegisterRange
+	public int getInputRegisterCount() {
+		return m_InputRegisters.size();
+	}
 
-  public void addRegister(Register reg) {
-    if (!isLocked()) {
-      m_Registers.addElement(reg);
-    }
-  }//addRegister
+	public InputRegister[] getInputRegisterRange(int ref, int count) {
+		// ensure valid reference range
+		if (ref < 0 || ref + count > m_InputRegisters.size())
+			throw new IllegalAddressException();
 
-  public void removeRegister(Register reg) {
-    if (!isLocked()) {
-      m_Registers.removeElement(reg);
-    }
-  }//removeRegister
+		InputRegister[] iregs = new InputRegister[count];
+		for (int i = 0; i < iregs.length; i++)
+			iregs[i] = getInputRegister(ref + i);
 
-  public void setRegister(int ref, Register reg)
-      throws IllegalAddressException {
-    if (!isLocked()) {
-      try {
-        m_Registers.setElementAt(reg, ref);
-      } catch (IndexOutOfBoundsException ex) {
-        throw new IllegalAddressException();
-      }
-    }
-  }//setRegister
+		return iregs;
+	}
 
-  public Register getRegister(int ref)
-      throws IllegalAddressException {
+	public void addRegister(Register reg) {
+		if (!isLocked()) {
+			m_Registers.addElement(reg);
+		}
+	}
 
-    try {
-      return (Register) m_Registers.elementAt(ref);
-    } catch (IndexOutOfBoundsException ex) {
-      throw new IllegalAddressException();
-    }
-  }//getRegister
+	public void removeRegister(Register reg) {
+		if (!isLocked()) {
+			m_Registers.removeElement(reg);
+		}
+	}
 
-  public int getRegisterCount() {
-    return m_Registers.size();
-  }//getRegisterCount
+	public void setRegister(int ref, Register reg)
+			throws IllegalAddressException {
+		if (!isLocked()) {
+			try {
+				m_Registers.setElementAt(reg, ref);
+			} catch (IndexOutOfBoundsException ex) {
+				throw new IllegalAddressException();
+			}
+		}
+	}
 
-  public Register[] getRegisterRange(int ref, int count) {
-    //ensure valid reference range
-    if (ref < 0 || ref + count > m_Registers.size()) {
-      throw new IllegalAddressException();
-    } else {
-      Register[] iregs = new Register[count];
-      for (int i = 0; i < iregs.length; i++) {
-        iregs[i] = getRegister(ref + i);
-      }
-      return iregs;
-    }
-  }//getRegisterRange
+	public Register getRegister(int ref) throws IllegalAddressException {
+		try {
+			return (Register) m_Registers.elementAt(ref);
+		} catch (IndexOutOfBoundsException ex) {
+			throw new IllegalAddressException();
+		}
+	}
 
-}//class SimpleProcessImage
+	public int getRegisterCount() {
+		return m_Registers.size();
+	}
+
+	public Register[] getRegisterRange(int ref, int count) {
+		if (ref < 0 || ref + count > m_Registers.size()) {
+			throw new IllegalAddressException();
+		} else {
+			Register[] iregs = new Register[count];
+			for (int i = 0; i < iregs.length; i++) {
+				iregs[i] = getRegister(ref + i);
+			}
+			return iregs;
+		}
+	}
+}

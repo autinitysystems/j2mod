@@ -35,29 +35,34 @@ package com.ghgande.j2mod.modbus.procimg;
 
 import com.ghgande.j2mod.modbus.util.Observable;
 
-
 /**
  * Class implementing an observable digital output.
- *
+ * 
  * @author Dieter Wimberger
  * @version 1.2rc1 (09/11/2004)
  */
-public class ObservableDigitalOut
-    extends Observable
-    implements DigitalOut {
+public class ObservableDigitalOut extends Observable implements DigitalOut {
 
-  /**
-   * A boolean holding the state of this digital out.
-   */
-  protected boolean m_Set;
+	/**
+	 * A boolean holding the state of this digital out.
+	 */
+	protected boolean m_Set;
 
-  public boolean isSet() {
-    return m_Set;
-  }//isSet
+	/**
+	 * Determine if the digital output is set.
+	 * 
+	 * @returns the boolean value of the digital output.
+	 */
+	public boolean isSet() {
+		return m_Set;
+	}
 
-  public void set(boolean b) {
-    m_Set = b;
-    notifyObservers("value");
-  }//set
-
-}//class ObservableDigitalIn
+	/**
+	 * Set or clear the digital output.  Will notify any registered
+	 * observers.
+	 */
+	public void set(boolean b) {
+		m_Set = b;
+		notifyObservers("value");
+	}
+}

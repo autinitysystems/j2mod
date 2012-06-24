@@ -43,106 +43,112 @@ import com.ghgande.j2mod.modbus.procimg.IllegalAddressException;
 import com.ghgande.j2mod.modbus.procimg.ProcessImage;
 import com.ghgande.j2mod.modbus.procimg.Register;
 
-
 /**
- * Class implementing a <tt>ReadMultipleRegistersRequest</tt>.
- * The implementation directly correlates with the class 0
- * function <i>read multiple registers (FC 3)</i>. It
- * encapsulates the corresponding request message.
- *
+ * Class implementing a <tt>ReadMultipleRegistersRequest</tt>. The
+ * implementation directly correlates with the class 0 function <i>read multiple
+ * registers (FC 3)</i>. It encapsulates the corresponding request message.
+ * 
  * @author Dieter Wimberger
  * @version 1.2rc1 (09/11/2004)
  */
-public final class ReadMultipleRegistersRequest
-extends ModbusRequest {
+public final class ReadMultipleRegistersRequest extends ModbusRequest {
 
-	//instance attributes
+	// instance attributes
 	private int m_Reference;
 	private int m_WordCount;
 
 	/**
-	 * Constructs a new <tt>ReadMultipleRegistersRequest</tt>
-	 * instance.
+	 * Constructs a new <tt>ReadMultipleRegistersRequest</tt> instance.
 	 */
 	public ReadMultipleRegistersRequest() {
 		super();
+
 		setFunctionCode(Modbus.READ_MULTIPLE_REGISTERS);
-		//4 bytes (remember unit identifier and function
-		//code are excluded)
 		setDataLength(4);
-	}//constructor
+	}
 
 	/**
-	 * Constructs a new <tt>ReadMultipleRegistersRequest</tt>
-	 * instance with a given reference and count of words
-	 * to be read.
-	 * <p>
-	 * @param ref the reference number of the register
-	 *        to read from.
-	 * @param count the number of words to be read.
+	 * Constructs a new <tt>ReadMultipleRegistersRequest</tt> instance with a
+	 * given reference and count of words to be read.
+	 * 
+	 * @param ref
+	 *            the reference number of the register to read from.
+	 * @param count
+	 *            the number of words to be read.
 	 */
 	public ReadMultipleRegistersRequest(int ref, int count) {
 		super();
+
 		setFunctionCode(Modbus.READ_MULTIPLE_REGISTERS);
 		setDataLength(4);
+
 		setReference(ref);
 		setWordCount(count);
-	}//constructor
+	}
+	
+	public ModbusResponse getResponse() {
+		ReadMultipleRegistersResponse response = null;
+
+		response = new ReadMultipleRegistersResponse();
+		
+		response.setUnitID(getUnitID());
+		response.setHeadless(isHeadless());
+		if (! isHeadless()) {
+			response.setProtocolID(getProtocolID());
+			response.setTransactionID(getTransactionID());
+		}
+		return response;
+	}
 
 	public ModbusResponse createResponse() {
 		ReadMultipleRegistersResponse response = null;
 		Register[] regs = null;
 
-		//1. get process image
+		// 1. get process image
 		ProcessImage procimg = ModbusCoupler.getReference().getProcessImage();
-		//2. get input registers range
+		// 2. get input registers range
 		try {
-			regs = procimg.getRegisterRange(this.getReference(), this.getWordCount());
-		} catch (IllegalAddressException iaex) {
+			regs = procimg.getRegisterRange(getReference(), getWordCount());
+		} catch (IllegalAddressException e) {
 			return createExceptionResponse(Modbus.ILLEGAL_ADDRESS_EXCEPTION);
 		}
-		response = new ReadMultipleRegistersResponse(regs);
-		//transfer header data
-		if (!isHeadless()) {
-			response.setTransactionID(this.getTransactionID());
-			response.setProtocolID(this.getProtocolID());
-		} else {
-			response.setHeadless();
-		}
-		response.setUnitID(this.getUnitID());
-		response.setFunctionCode(this.getFunctionCode());
-
+		response = (ReadMultipleRegistersResponse) getResponse();
+		response.setRegisters(regs);
+		
 		return response;
-	}//createResponse
+	}
 
 	/**
-	 * Sets the reference of the register to start reading
-	 * from with this <tt>ReadMultipleRegistersRequest</tt>.
+	 * Sets the reference of the register to start reading from with this
+	 * <tt>ReadMultipleRegistersRequest</tt>.
 	 * <p>
-	 * @param ref the reference of the register
-	 *        to start reading from.
+	 * 
+	 * @param ref
+	 *            the reference of the register to start reading from.
 	 */
 	public void setReference(int ref) {
 		m_Reference = ref;
-	}//setReference
+	}
 
 	/**
-	 * Returns the reference of the register to to start
-	 * reading from with this
+	 * Returns the reference of the register to to start reading from with this
 	 * <tt>ReadMultipleRegistersRequest</tt>.
 	 * <p>
-	 * @return the reference of the register
-	 *        to start reading from as <tt>int</tt>.
+	 * 
+	 * @return the reference of the register to start reading from as
+	 *         <tt>int</tt>.
 	 */
 	public int getReference() {
 		return m_Reference;
-	}//getReference
+	}
 
 	/**
 	 * Sets the number of words to be read with this
 	 * <tt>ReadMultipleRegistersRequest</tt>.
 	 * <p>
-	 * @param count the number of words to be read.
+	 * 
+	 * @param count
+	 *            the number of words to be read.
 	 */
 	public void setWordCount(int count) {
 		m_WordCount = count;
@@ -152,24 +158,22 @@ extends ModbusRequest {
 	 * Returns the number of words to be read with this
 	 * <tt>ReadMultipleRegistersRequest</tt>.
 	 * <p>
-	 * @return the number of words to be read as
-	 *        <tt>int</tt>.
+	 * 
+	 * @return the number of words to be read as <tt>int</tt>.
 	 */
 	public int getWordCount() {
 		return m_WordCount;
-	}//getWordCount
+	}
 
-	public void writeData(DataOutput dout)
-	throws IOException {
+	public void writeData(DataOutput dout) throws IOException {
 		dout.writeShort(m_Reference);
 		dout.writeShort(m_WordCount);
-	}//writeData
+	}
 
-	public void readData(DataInput din)
-	throws IOException {
+	public void readData(DataInput din) throws IOException {
 		m_Reference = din.readUnsignedShort();
 		m_WordCount = din.readUnsignedShort();
-	}//readData
+	}
 
 	public byte[] getMessage() {
 		byte result[] = new byte[4];

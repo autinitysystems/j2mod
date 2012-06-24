@@ -39,37 +39,32 @@ import java.io.IOException;
 
 import com.ghgande.j2mod.modbus.Modbus;
 
-
 /**
- * Class implementing a<tt>ModbusResponse</tt>
- * that represents an exception.
- *
+ * Class implementing a<tt>ModbusResponse</tt> that represents an exception.
+ * 
  * @author Dieter Wimberger
  * @version 1.2rc1 (09/11/2004)
  * 
- * @version 1.2rc1-ghpc (04/26/2011)
- * Cleaned up a bit and added some Javadocs.
+ * @version 1.2rc1-ghpc (04/26/2011) Cleaned up a bit and added some Javadocs.
  */
-public class ExceptionResponse
-extends ModbusResponse {
+public class ExceptionResponse extends ModbusResponse {
 
-	//instance attributes
+	// instance attributes
 	private int m_ExceptionCode = -1;
 
 	/**
-	 * Returns the Modbus exception code of this
-	 * <tt>ExceptionResponse</tt>.
+	 * Returns the Modbus exception code of this <tt>ExceptionResponse</tt>.
 	 * <p>
+	 * 
 	 * @return the exception code as <tt>int</tt>.
 	 */
 	public int getExceptionCode() {
 		return m_ExceptionCode;
-	}//getExceptionCode
+	}
 
-	public void writeData(DataOutput dout)
-	throws IOException {
+	public void writeData(DataOutput dout) throws IOException {
 		dout.writeByte(getExceptionCode());
-	}//writeData
+	}
 
 	/**
 	 * readData()
@@ -83,8 +78,7 @@ extends ModbusResponse {
 	/**
 	 * getMessage()
 	 * 
-	 * return the exception type, which is the "message" for
-	 * this response.
+	 * return the exception type, which is the "message" for this response.
 	 * 
 	 * @return -- byte array containing the 1 byte exception code.
 	 */
@@ -95,12 +89,14 @@ extends ModbusResponse {
 	}
 
 	/**
-	 * Constructs a new <tt>ExceptionResponse</tt> instance with
-	 * a given function code and an exception code. The function
-	 * code will be automatically increased with the exception offset.
-	 *
-	 * @param fc the function code as <tt>int</tt>.
-	 * @param exc the exception code as <tt>int</tt>.
+	 * Constructs a new <tt>ExceptionResponse</tt> instance with a given
+	 * function code and an exception code. The function code will be
+	 * automatically increased with the exception offset.
+	 * 
+	 * @param fc
+	 *            the function code as <tt>int</tt>.
+	 * @param exc
+	 *            the exception code as <tt>int</tt>.
 	 */
 	public ExceptionResponse(int fc, int exc) {
 
@@ -114,10 +110,11 @@ extends ModbusResponse {
 	}
 
 	/**
-	 * Constructs a new <tt>ExceptionResponse</tt> instance with
-	 * a given function code. ORs the exception offset automatically.
-	 *
-	 * @param fc the function code as <tt>int</tt>.
+	 * Constructs a new <tt>ExceptionResponse</tt> instance with a given
+	 * function code. ORs the exception offset automatically.
+	 * 
+	 * @param fc
+	 *            the function code as <tt>int</tt>.
 	 */
 	public ExceptionResponse(int fc) {
 
@@ -129,8 +126,8 @@ extends ModbusResponse {
 	}
 
 	/**
-	 * Constructs a new <tt>ExceptionResponse</tt> instance with no
-	 * function or exception code.
+	 * Constructs a new <tt>ExceptionResponse</tt> instance with no function
+	 * or exception code.
 	 */
 	public ExceptionResponse() {
 

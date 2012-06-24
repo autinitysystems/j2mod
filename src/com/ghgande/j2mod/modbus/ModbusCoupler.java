@@ -40,6 +40,7 @@ import com.ghgande.j2mod.modbus.procimg.ProcessImageFactory;
 /**
  * Class implemented following a Singleton pattern, to couple the slave side
  * with a master side or with a device.
+ * 
  * <p>
  * At the moment it only provides a reference to the OO model of the process
  * image.
@@ -58,17 +59,15 @@ public class ModbusCoupler {
 	private boolean m_Master = true;
 	private ProcessImageFactory m_PIFactory;
 
-	static {
-		c_Self = new ModbusCoupler();
-	}
-
+	/**
+	 * A private constructor which creates a default process image.
+	 */
 	private ModbusCoupler() {
 		m_PIFactory = new DefaultProcessImageFactory();
 	}
 
 	/**
 	 * Private constructor to prevent multiple instantiation.
-	 * <p/>
 	 * 
 	 * @param procimg
 	 *            a <tt>ProcessImage</tt>.
@@ -100,7 +99,6 @@ public class ModbusCoupler {
 	/**
 	 * Returns a reference to the <tt>ProcessImage</tt> of this
 	 * <tt>ModbusCoupler</tt>.
-	 * <p/>
 	 * 
 	 * @return the <tt>ProcessImage</tt>.
 	 */
@@ -111,7 +109,6 @@ public class ModbusCoupler {
 	/**
 	 * Sets the reference to the <tt>ProcessImage</tt> of this
 	 * <tt>ModbusCoupler</tt>.
-	 * <p/>
 	 * 
 	 * @param procimg
 	 *            the <tt>ProcessImage</tt> to be set.
@@ -156,7 +153,7 @@ public class ModbusCoupler {
 	 * @return true if slave, false otherwise.
 	 */
 	public boolean isSlave() {
-		return !m_Master;
+		return ! m_Master;
 	}
 
 	/**
@@ -168,14 +165,20 @@ public class ModbusCoupler {
 	public void setMaster(boolean master) {
 		m_Master = master;
 	}
+	
+	public static final boolean isInitialized() {
+		return c_Self != null;
+	}
 
 	/**
 	 * Returns a reference to the singleton instance.
-	 * <p/>
 	 * 
 	 * @return the <tt>ModbusCoupler</tt> instance reference.
 	 */
-	public static final ModbusCoupler getReference() {
-		return c_Self;
+	public static synchronized final ModbusCoupler getReference() {
+		if (c_Self == null)
+			return (c_Self = new ModbusCoupler());
+		else
+			return c_Self;
 	}
 }

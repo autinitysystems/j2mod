@@ -39,74 +39,93 @@ import com.ghgande.j2mod.modbus.ModbusIOException;
 import com.ghgande.j2mod.modbus.io.ModbusTransport;
 import com.ghgande.j2mod.modbus.msg.ModbusRequest;
 import com.ghgande.j2mod.modbus.msg.ModbusResponse;
+import com.ghgande.j2mod.modbus.procimg.ProcessImage;
 
 /**
  * Class implementing a handler for incoming Modbus/TCP requests.
- *
+ * 
  * @author Dieter Wimberger
  * @version 1.2rc1 (09/11/2004)
  */
 public class TCPConnectionHandler implements Runnable {
+	private TCPSlaveConnection m_Connection;
+	private ModbusTransport m_Transport;
 
-  private TCPSlaveConnection m_Connection;
-  private ModbusTransport m_Transport;
+	/**
+	 * Constructs a new <tt>TCPConnectionHandler</tt> instance.
+	 * 
+	 * <p>
+	 * The connections will be handling using the <tt>ModbusCouple</tt> class
+	 * and a <tt>ProcessImage</tt> which provides the interface between the
+	 * slave implementation and the <tt>TCPSlaveConnection</tt>.
+	 * 
+	 * @param con
+	 *            an incoming connection.
+	 */
+	public TCPConnectionHandler(TCPSlaveConnection con) {
+		setConnection(con);
+	}
 
-  /**
-   * Constructs a new <tt>TCPConnectionHandler</tt> instance.
-   *
-   * @param con an incoming connection.
-   */
-  public TCPConnectionHandler(TCPSlaveConnection con) {
-    setConnection(con);
-  }//constructor
+	/**
+	 * Sets a connection to be handled by this <tt>
+	 * TCPConnectionHandler</tt>.
+	 * 
+	 * @param con
+	 *            a <tt>TCPSlaveConnection</tt>.
+	 */
+	public void setConnection(TCPSlaveConnection con) {
+		m_Connection = con;
+		m_Transport = m_Connection.getModbusTransport();
+	}
 
-  /**
-   * Sets a connection to be handled by this <tt>
-   * TCPConnectionHandler</tt>.
-   *
-   * @param con a <tt>TCPSlaveConnection</tt>.
-   */
-  public void setConnection(TCPSlaveConnection con) {
-    m_Connection = con;
-    m_Transport = m_Connection.getModbusTransport();
-  }//setConnection
+	public void run() {
+		try {
+			do {
+				// 1. read the request
+				ModbusRequest request = m_Transport.readRequest();
+				ModbusResponse response = null;
 
-  public void run() {
-    try {
-      do {
-        //1. read the request
-        ModbusRequest request = m_Transport.readRequest();
-        //System.out.println("Request:" + request.getHexMessage());
-        ModbusResponse response = null;
+				/*
+				 * test if Process image exists.
+				 */
+				ProcessImage image = ModbusCoupler.getReference()
+						.getProcessImage();
+				if (image == null) {
+					/*
+					 * Do nothing -- non-existent devices do not respond to
+					 * messages.
+					 */
+					continue;
+				}
+				if (image.getUnitID() != 0
+						&& request.getUnitID() != image.getUnitID()) {
+					/*
+					 * Do nothing -- non-existent units do not respond to
+					 * message.
+					 */
+					continue;
+				}
 
-        //test if Process image exists
-        if (ModbusCoupler.getReference().getProcessImage() == null) {
-          response =
-              request.createExceptionResponse(Modbus.ILLEGAL_FUNCTION_EXCEPTION);
-        } else {
-          response = request.createResponse();
-        }
-        /*DEBUG*/
-        if (Modbus.debug) System.out.println("Request:" + request.getHexMessage());
-        if (Modbus.debug) System.out.println("Response:" + response.getHexMessage());
+				// 2. create the response.
+				response = request.createResponse();
 
-        //System.out.println("Response:" + response.getHexMessage());
-        m_Transport.writeMessage(response);
-      } while (true);
-    } catch (ModbusIOException ex) {
-      if (!ex.isEOF()) {
-        //other troubles, output for debug
-        ex.printStackTrace();
-      }
-    } finally {
-      try {
-        m_Connection.close();
-      } catch (Exception ex) {
-        //ignore
-      }
+				if (Modbus.debug) {
+					System.out.println("Request:" + request.getHexMessage());
+					System.out.println("Response:" + response.getHexMessage());
+				}
 
-    }
-  }//run
-
-}//TCPConnectionHandler
-
+				// 3. write the response message.
+				m_Transport.writeMessage(response);
+			} while (true);
+		} catch (ModbusIOException ex) {
+			if (!ex.isEOF() && Modbus.debug)
+				ex.printStackTrace();
+		} finally {
+			try {
+				m_Connection.close();
+			} catch (Exception ex) {
+				// ignore
+			}
+		}
+	}
+}

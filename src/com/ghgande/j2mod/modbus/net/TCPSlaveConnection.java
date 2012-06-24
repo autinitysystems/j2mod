@@ -41,131 +41,168 @@ import com.ghgande.j2mod.modbus.Modbus;
 import com.ghgande.j2mod.modbus.io.ModbusTCPTransport;
 import com.ghgande.j2mod.modbus.io.ModbusTransport;
 
-
 /**
  * Class that implements a TCPSlaveConnection.
- *
+ * 
  * @author Dieter Wimberger
  * @version 1.2rc1 (09/11/2004)
  */
 public class TCPSlaveConnection {
 
-  //instance attributes
-  private Socket m_Socket;
-  private int m_Timeout = Modbus.DEFAULT_TIMEOUT;
-  private boolean m_Connected;
-  private ModbusTCPTransport m_ModbusTransport;
+	// instance attributes
+	private Socket m_Socket;
+	private int m_Unit = 0;
+	private int m_Timeout = Modbus.DEFAULT_TIMEOUT;
+	private boolean m_Connected;
+	private ModbusTCPTransport m_ModbusTransport;
 
-  /**
-   * Constructs a <tt>TCPSlaveConnection</tt> instance
-   * using a given socket instance.
-   *
-   * @param socket the socket instance to be used for communication.
-   */
-  public TCPSlaveConnection(Socket socket) {
-    try {
-      setSocket(socket);
-    } catch (IOException ex) {
-       if(Modbus.debug) System.out.println("TCPSlaveConnection::Socket invalid.");
-      //
+	/**
+	 * Constructs a <tt>TCPSlaveConnection</tt> instance using a given socket
+	 * instance.
+	 * 
+	 * @param socket
+	 *            the socket instance to be used for communication.
+	 */
+	public TCPSlaveConnection(Socket socket) {
+		try {
+			setSocket(socket);
+		} catch (IOException ex) {
+			if (Modbus.debug)
+				System.out.println("TCPSlaveConnection::Socket invalid.");
 
-      throw new IllegalStateException("Socket invalid.");
-      //
-    }
-  }//constructor
+			throw new IllegalStateException("Socket invalid.");
+		}
+	}
 
-  /**
-   * Closes this <tt>TCPSlaveConnection</tt>.
-   */
-  public void close() {
-    if(m_Connected) {
-      try {
-        m_ModbusTransport.close();
-        m_Socket.close();
-      } catch (IOException ex) {
-        if(Modbus.debug) ex.printStackTrace();
-      }
-      m_Connected = false;
-    }
-  }//close
+	/**
+	 * Constructs a <tt>TCPSlaveConnection</tt> instance using a given socket
+	 * instance.
+	 * 
+	 * @param socket
+	 *            the socket instance to be used for communication.
+	 * @param unit
+	 *            the unit number for this slave connection.
+	 */
+	public TCPSlaveConnection(Socket socket, int unit) {
+		m_Unit = unit;
 
-  /**
-   * Returns the <tt>ModbusTransport</tt> associated with this
-   * <tt>TCPMasterConnection</tt>.
-   *
-   * @return the connection's <tt>ModbusTransport</tt>.
-   */
-  public ModbusTransport getModbusTransport() {
-    return m_ModbusTransport;
-  }//getIO
+		try {
+			setSocket(socket);
+		} catch (IOException ex) {
+			if (Modbus.debug)
+				System.out.println("TCPSlaveConnection::Socket invalid.");
 
-  /**
-   * Prepares the associated <tt>ModbusTransport</tt> of this
-   * <tt>TCPMasterConnection</tt> for use.
-   *
-   * @param socket the socket to be used for communication.
-   * @throws IOException if an I/O related error occurs.
-   */
-  private void setSocket(Socket socket) throws IOException {
-    m_Socket = socket;
-    if (m_ModbusTransport == null) {
-      m_ModbusTransport = new ModbusTCPTransport(m_Socket);
-    } else {
-      m_ModbusTransport.setSocket(m_Socket);
-    }
-    m_Connected = true;
-  }//prepareIO
+			throw new IllegalStateException("Socket invalid.");
+		}
+	}
 
-  /**
-   * Returns the timeout for this <tt>TCPMasterConnection</tt>.
-   *
-   * @return the timeout as <tt>int</tt>.
-   */
-  public int getTimeout() {
-    return m_Timeout;
-  }//getTimeout
+	/**
+	 * Closes this <tt>TCPSlaveConnection</tt>.
+	 */
+	public void close() {
+		if (m_Connected) {
+			try {
+				m_ModbusTransport.close();
+				m_Socket.close();
+			} catch (IOException ex) {
+				if (Modbus.debug)
+					ex.printStackTrace();
+			}
+			m_Connected = false;
+		}
+	}
 
-  /**
-   * Sets the timeout for this <tt>TCPSlaveConnection</tt>.
-   *
-   * @param timeout the timeout as <tt>int</tt>.
-   */
-  public void setTimeout(int timeout) {
-    m_Timeout = timeout;
-    try {
-      m_Socket.setSoTimeout(m_Timeout);
-    } catch (IOException ex) {
-      //handle?
-    }
-  }//setTimeout
+	/**
+	 * Returns the <tt>ModbusTransport</tt> associated with this
+	 * <tt>TCPMasterConnection</tt>.
+	 * 
+	 * @return the connection's <tt>ModbusTransport</tt>.
+	 */
+	public ModbusTransport getModbusTransport() {
+		return m_ModbusTransport;
+	}
 
-  /**
-   * Returns the destination port of this
-   * <tt>TCPMasterConnection</tt>.
-   *
-   * @return the port number as <tt>int</tt>.
-   */
-  public int getPort() {
-    return m_Socket.getLocalPort();
-  }//getPort
+	/**
+	 * Prepares the associated <tt>ModbusTransport</tt> of this
+	 * <tt>TCPMasterConnection</tt> for use.
+	 * 
+	 * @param socket
+	 *            the socket to be used for communication.
+	 * @throws IOException
+	 *             if an I/O related error occurs.
+	 */
+	private void setSocket(Socket socket) throws IOException {
+		m_Socket = socket;
+		
+		if (m_ModbusTransport == null)
+			m_ModbusTransport = new ModbusTCPTransport(m_Socket);
+		else
+			m_ModbusTransport.setSocket(m_Socket);
 
-  /**
-   * Returns the destination <tt>InetAddress</tt> of this
-   * <tt>TCPMasterConnection</tt>.
-   *
-   * @return the destination address as <tt>InetAddress</tt>.
-   */
-  public InetAddress getAddress() {
-    return m_Socket.getLocalAddress();
-  }//getAddress
+		m_Connected = true;
+	}
 
-  /**
-   * Tests if this <tt>TCPMasterConnection</tt> is connected.
-   *
-   * @return <tt>true</tt> if connected, <tt>false</tt> otherwise.
-   */
-  public boolean isConnected() {
-    return m_Connected;
-  }//isConnected
+	/**
+	 * Returns the timeout for this <tt>TCPSlaveConnection</tt>.
+	 * 
+	 * @return the timeout as <tt>int</tt>.
+	 */
+	public int getTimeout() {
+		return m_Timeout;
+	}
 
-}//class TCPSlaveConnection
+	/**
+	 * Sets the timeout for this <tt>TCPSlaveConnection</tt>.
+	 * 
+	 * @param timeout
+	 *            the timeout in milliseconds as <tt>int</tt>.
+	 */
+	public void setTimeout(int timeout) {
+		m_Timeout = timeout;
+
+		try {
+			m_Socket.setSoTimeout(m_Timeout);
+		} catch (IOException ex) {
+			// handle?
+		}
+	}
+
+	/**
+	 * Returns the destination port of this <tt>TCPSlaveConnection</tt>.
+	 * 
+	 * @return the port number as <tt>int</tt>.
+	 */
+	public int getPort() {
+		return m_Socket.getLocalPort();
+	}
+
+	/**
+	 * Returns the destination <tt>InetAddress</tt> of this
+	 * <tt>TCPSlaveConnection</tt>.
+	 * 
+	 * @return the destination address as <tt>InetAddress</tt>.
+	 */
+	public InetAddress getAddress() {
+		return m_Socket.getLocalAddress();
+	}
+
+	/**
+	 * Returns the slave unit number for this connection. A unit number of 0
+	 * means to accept all unit numbers, while a non-zero unit number means only
+	 * to accept requests for that specific unit.
+	 * 
+	 * @returns unit number
+	 */
+	public int getUnitNumber() {
+		return m_Unit;
+	}
+
+	/**
+	 * Tests if this <tt>TCPSlaveConnection</tt> is connected.
+	 * 
+	 * @return <tt>true</tt> if connected, <tt>false</tt> otherwise.
+	 */
+	public boolean isConnected() {
+		return m_Connected;
+	}
+}

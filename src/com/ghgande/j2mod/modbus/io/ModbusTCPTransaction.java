@@ -43,149 +43,149 @@ import com.ghgande.j2mod.modbus.msg.ModbusResponse;
 import com.ghgande.j2mod.modbus.net.TCPMasterConnection;
 
 /**
- * Class implementing the <tt>ModbusTransaction</tt>
- * interface.
- *
+ * Class implementing the <tt>ModbusTransaction</tt> interface.
+ * 
  * @author Dieter Wimberger
  * @version 1.2rc1 (09/11/2004)
  * 
- * @version 021212-jfh
- * Added code to re-read a response if the transaction IDs
- * have gotten out of sync.
+ * @version 021212- jfhaugh (jfh@ghgande.com) Added code to re-read a response
+ *          if the transaction IDs have gotten out of sync.
  */
 public class ModbusTCPTransaction implements ModbusTransaction {
 
-	//class attributes
-	private static int c_TransactionID =
-		Modbus.DEFAULT_TRANSACTION_ID;
+	// class attributes
+	private static int c_TransactionID = Modbus.DEFAULT_TRANSACTION_ID;
 
-	//instance attributes and associations
+	// instance attributes and associations
 	private TCPMasterConnection m_Connection;
 	private ModbusTransport m_IO;
 	private ModbusRequest m_Request;
 	private ModbusResponse m_Response;
-	private boolean m_ValidityCheck =
-		Modbus.DEFAULT_VALIDITYCHECK;
+	private boolean m_ValidityCheck = Modbus.DEFAULT_VALIDITYCHECK;
 	private boolean m_Reconnecting = Modbus.DEFAULT_RECONNECTING;
 	private int m_Retries = Modbus.DEFAULT_RETRIES;
-	private int m_TransDelay = Modbus.DEFAULT_TIMEOUT;
 
 	/**
-	 * Constructs a new <tt>ModbusTCPTransaction</tt>
-	 * instance.
+	 * Constructs a new <tt>ModbusTCPTransaction</tt> instance.
 	 */
 	public ModbusTCPTransaction() {
-	}//constructor
+	}
 
 	/**
-	 * Constructs a new <tt>ModbusTCPTransaction</tt>
-	 * instance with a given <tt>ModbusRequest</tt> to
-	 * be send when the transaction is executed.
+	 * Constructs a new <tt>ModbusTCPTransaction</tt> instance with a given
+	 * <tt>ModbusRequest</tt> to be send when the transaction is executed.
 	 * <p>
-	 * @param request a <tt>ModbusRequest</tt> instance.
+	 * 
+	 * @param request
+	 *            a <tt>ModbusRequest</tt> instance.
 	 */
 	public ModbusTCPTransaction(ModbusRequest request) {
 		setRequest(request);
-	}//constructor
+	}
 
 	/**
-	 * Constructs a new <tt>ModbusTCPTransaction</tt>
-	 * instance with a given <tt>TCPMasterConnection</tt> to
-	 * be used for transactions.
+	 * Constructs a new <tt>ModbusTCPTransaction</tt> instance with a given
+	 * <tt>TCPMasterConnection</tt> to be used for transactions.
 	 * <p>
-	 * @param con a <tt>TCPMasterConnection</tt> instance.
+	 * 
+	 * @param con
+	 *            a <tt>TCPMasterConnection</tt> instance.
 	 */
 	public ModbusTCPTransaction(TCPMasterConnection con) {
 		setConnection(con);
-	}//constructor
+	}
 
 	/**
-	 * Sets the connection on which this <tt>ModbusTransaction</tt>
-	 * should be executed.<p>
-	 * An implementation should be able to
-	 * handle open and closed connections.<br>
+	 * Sets the connection on which this <tt>ModbusTransaction</tt> should be
+	 * executed.
 	 * <p>
-	 * @param con a <tt>TCPMasterConnection</tt>.
+	 * An implementation should be able to handle open and closed connections.
+	 * <br>
+	 * <p>
+	 * 
+	 * @param con
+	 *            a <tt>TCPMasterConnection</tt>.
 	 */
 	public void setConnection(TCPMasterConnection con) {
 		m_Connection = con;
 		m_IO = con.getModbusTransport();
-	}//setConnection
+	}
 
 	public void setRequest(ModbusRequest req) {
 		m_Request = req;
-		//m_Response = req.getResponse();
-	}//setRequest
+	}
 
 	public ModbusRequest getRequest() {
 		return m_Request;
-	}//getRequest
+	}
 
 	public ModbusResponse getResponse() {
 		return m_Response;
-	}//getResponse
+	}
 
 	/**
 	 * getTransactionID -- get the next transaction ID to use.
 	 * 
-	 * Note that this method is not synchronized.  Callers should
-	 * synchronize on this class instance if multiple threads can
-	 * create requests at the same time.
+	 * Note that this method is not synchronized. Callers should synchronize
+	 * on this class instance if multiple threads can create requests at the
+	 * same time.
 	 */
 	public int getTransactionID() {
 		if (c_TransactionID == 0 && isCheckingValidity())
 			c_TransactionID++;
-		
+
 		return c_TransactionID;
 	}
 
 	public void setCheckingValidity(boolean b) {
 		m_ValidityCheck = b;
-	}//setCheckingValidity
+	}
 
 	public boolean isCheckingValidity() {
 		return m_ValidityCheck;
-	}//isCheckingValidity
+	}
 
 	/**
-	 * Sets the flag that controls whether a
-	 * connection is openend and closed for
-	 * <b>each</b> execution or not.
+	 * Sets the flag that controls whether a connection is opened and closed
+	 * for <b>each</b> execution or not.
 	 * <p>
-	 * @param b true if reconnecting, false otherwise.
+	 * 
+	 * @param b
+	 *            true if reconnecting, false otherwise.
 	 */
 	public void setReconnecting(boolean b) {
 		m_Reconnecting = b;
-	}//setReconnecting
+	}
 
 	/**
-	 * Tests if the connection will be openend
-	 * and closed for <b>each</b> execution.
+	 * Tests if the connection will be opened and closed for <b>each</b>
+	 * execution.
 	 * <p>
+	 * 
 	 * @return true if reconnecting, false otherwise.
 	 */
 	public boolean isReconnecting() {
 		return m_Reconnecting;
-	}//isReconnecting
+	}
 
 	public int getRetries() {
 		return m_Retries;
-	}//getRetries
+	}
 
 	public void setRetries(int num) {
 		m_Retries = num;
-	}//setRetries
+	}
 
-	public void execute() throws ModbusIOException,
-			ModbusSlaveException, ModbusException {
+	public void execute() throws ModbusIOException, ModbusSlaveException,
+			ModbusException {
 
 		if (m_Request == null || m_Connection == null)
-			throw new ModbusException ("Invalid request or connection");
+			throw new ModbusException("Invalid request or connection");
 
 		/*
 		 * Automatically re-connect if disconnected.
 		 */
-		if (! m_Connection.isConnected()) {
+		if (!m_Connection.isConnected()) {
 			try {
 				m_Connection.connect();
 			} catch (Exception ex) {
@@ -194,9 +194,8 @@ public class ModbusTCPTransaction implements ModbusTransaction {
 		}
 
 		/*
-		 * Try sending the message up to m_Retries time.  Note that
-		 * the message is read immediately after being written, with
-		 * no flushing of buffers.
+		 * Try sending the message up to m_Retries time. Note that the message
+		 * is read immediately after being written, with no flushing of buffers.
 		 */
 		int retryCounter = 0;
 		while (retryCounter <= m_Retries) {
@@ -206,23 +205,29 @@ public class ModbusTCPTransaction implements ModbusTransaction {
 					m_Response = null;
 					do {
 						m_Response = m_IO.readResponse();
-					} while (m_Response != null && (m_Request.getTransactionID() != 0 &&
-							m_Request.getTransactionID() != m_Response.getTransactionID()) &&
-							++retryCounter <= m_Retries);
-					
+					} while (m_Response != null
+							&& (m_Request.getTransactionID() != 0 && m_Request
+									.getTransactionID() != m_Response
+									.getTransactionID())
+							&& ++retryCounter <= m_Retries);
+
 					if (retryCounter >= m_Retries) {
-						throw new ModbusIOException("Executing transaction failed (tried " + m_Retries + " times)");						
+						throw new ModbusIOException(
+								"Executing transaction failed (tried "
+										+ m_Retries + " times)");
 					}
 
 					/*
-					 * Both methods were successful, so the
-					 * transaction must have been executed.
+					 * Both methods were successful, so the transaction must
+					 * have been executed.
 					 */
 					break;
 				}
 			} catch (ModbusIOException ex) {
 				if (retryCounter == m_Retries) {
-					throw new ModbusIOException("Executing transaction failed (tried " + m_Retries + " times)");
+					throw new ModbusIOException(
+							"Executing transaction failed (tried " + m_Retries
+									+ " times)");
 				} else {
 					retryCounter++;
 					continue;
@@ -231,13 +236,11 @@ public class ModbusTCPTransaction implements ModbusTransaction {
 		}
 
 		/*
-		 * The slave may have returned an exception -- check for
-		 * that.
+		 * The slave may have returned an exception -- check for that.
 		 */
 		if (m_Response instanceof ExceptionResponse)
 			throw new ModbusSlaveException(
-					((ExceptionResponse) m_Response).getExceptionCode()
-			);
+					((ExceptionResponse) m_Response).getExceptionCode());
 
 		/*
 		 * Close the connection if it isn't supposed to stick around.
@@ -256,12 +259,13 @@ public class ModbusTCPTransaction implements ModbusTransaction {
 
 	/**
 	 * checkValidity -- Verify the transaction IDs match or are zero.
-	 *
-	 * @throws ModbusException if the transaction was not valid.
+	 * 
+	 * @throws ModbusException
+	 *             if the transaction was not valid.
 	 */
 	private void checkValidity() throws ModbusException {
-		if (m_Request.getTransactionID() == 0 ||
-				m_Response.getTransactionID() == 0)
+		if (m_Request.getTransactionID() == 0
+				|| m_Response.getTransactionID() == 0)
 			return;
 
 		if (m_Request.getTransactionID() != m_Response.getTransactionID())
@@ -269,13 +273,12 @@ public class ModbusTCPTransaction implements ModbusTransaction {
 	}
 
 	/**
-	 * incrementTransactionID -- Increment the transaction ID for the
-	 *	next transaction.  Note that the caller must get the new
-	 *	transaction ID with getTransactionID().  This is only done
-	 *	validity checking is enabled so that dumb slaves don't
-	 *	cause problems.  The original request will have its 
-	 *	transaction ID incremented as well so that sending the
-	 *	same transaction again won't cause problems.
+	 * incrementTransactionID -- Increment the transaction ID for the next
+	 * transaction. Note that the caller must get the new transaction ID with
+	 * getTransactionID(). This is only done validity checking is enabled so
+	 * that dumb slaves don't cause problems. The original request will have its
+	 * transaction ID incremented as well so that sending the same transaction
+	 * again won't cause problems.
 	 */
 	private void incrementTransactionID() {
 		if (isCheckingValidity()) {
