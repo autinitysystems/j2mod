@@ -79,23 +79,16 @@ import com.ghgande.j2mod.modbus.Modbus;
  * 
  * @version @version@ (@date@)
  */
-public final class ReadCommEventCounterResponse extends ModbusResponse {
+public final class ReadCommEventLogResponse extends ModbusResponse {
 
 	/*
 	 * Message fields.
 	 */
+	private int m_ByteCount;
 	private int m_Status;
-	private int m_Events;
-
-	/**
-	 * Constructs a new <tt>ReportSlaveIDResponse</tt> instance.
-	 */
-	public ReadCommEventCounterResponse() {
-		super();
-
-		setFunctionCode(Modbus.READ_COMM_EVENT_COUNTER);
-		setDataLength(4);
-	}
+	private int m_EventCount;
+	private int m_MessageCount;
+	private byte[] m_Events;
 
 	/**
 	 * getStatus -- get the device's status.
@@ -119,14 +112,50 @@ public final class ReadCommEventCounterResponse extends ModbusResponse {
 	 * getEvents -- get device's event counter.
 	 */
 	public int getEventCount() {
-		return m_Events;
+		return m_EventCount;
 	}
 
 	/**
-	 * setEvents -- set the device's event counter.
+	 * setEventCount -- set the device's event counter.
 	 */
 	public void setEventCount(int count) {
-		m_Events = count;
+		m_EventCount = count;
+	}
+	
+	/**
+	 * getMessageCount -- get device's message counter.
+	 */
+	public int getMessageCount() {
+		return m_MessageCount;
+	}
+	
+	/**
+	 * setMessageCount -- set device's message counter.
+	 */
+	public void setMessageCount(int count) {
+		m_MessageCount = count;
+	}
+
+	/**
+	 * getEvent -- get an event from the event log.
+	 */
+	public int getEvent(int index) {
+		if (m_Events == null || index < 0 || index >= m_EventCount)
+			throw new IndexOutOfBoundsException("index = " + index
+					+ ", limit = " + m_EventCount);
+		
+		return m_Events[index] & 0xFF;
+	}
+	
+	/**
+	 * setEvent -- store an event number in the event log
+	 */
+	public void setEvent(int index, int event) {
+		if (m_Events == null || index < 0 || index >= m_EventCount)
+			throw new IndexOutOfBoundsException("index = " + index
+					+ ", limit = " + m_EventCount);
+		
+		m_Events[index] = (byte) event;	
 	}
 
 	/**
@@ -141,21 +170,46 @@ public final class ReadCommEventCounterResponse extends ModbusResponse {
 	 * such as for Modbus/TCP, it will have been read already.
 	 */
 	public void readData(DataInput din) throws IOException {
+		m_ByteCount = din.readByte();
 		m_Status = din.readShort();
-		m_Events = din.readShort();
+		m_EventCount = din.readShort();
+		m_MessageCount = din.readShort();
+		
+		if (m_ByteCount != 6 + m_EventCount)
+			throw new IOException("Undetected error reading packet");
+		
+		m_Events = new byte[m_EventCount];
+		
+		din.readFully(m_Events, 0, m_EventCount);
 	}
 
 	/**
 	 * getMessage -- format the message into a byte array.
 	 */
 	public byte[] getMessage() {
-		byte result[] = new byte[4];
+		byte result[] = new byte[m_EventCount + 7];
 
-		result[0] = (byte) (m_Status >> 8);
-		result[1] = (byte) (m_Status & 0xFF);
-		result[2] = (byte) (m_Events >> 8);
-		result[3] = (byte) (m_Events & 0xFF);
+		result[0] = (byte) (m_ByteCount = m_EventCount + 6);
+		result[1] = (byte) (m_Status >> 8);
+		result[2] = (byte) (m_Status & 0xFF);
+		result[3] = (byte) (m_EventCount >> 8);
+		result[4] = (byte) (m_EventCount & 0xFF);
+		result[5] = (byte) (m_MessageCount >> 8);
+		result[6] = (byte) (m_MessageCount & 0xFF);
+		
+		for (int i = 0;i < m_EventCount;i++)
+			result[7 + i] = m_Events[i];
 
 		return result;
+	}
+	
+	/**
+	 * Constructs a new <tt>ReadCommEventLogResponse</tt> instance.
+	 */
+	public ReadCommEventLogResponse() {
+		super();
+
+		setFunctionCode(Modbus.READ_COMM_EVENT_LOG);
+		setDataLength(7);
 	}
 }

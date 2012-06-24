@@ -33,8 +33,8 @@
  ***/
 
 /***
- * Java Modbus Library (j2mod)
- * Copyright (c) 2010-2012, greenHouse Gas and Electric
+ * Java Modbus Library (jamod)
+ * Copyright 2010, greenHouse Computers, LLC
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -72,90 +72,87 @@ import java.io.IOException;
 
 import com.ghgande.j2mod.modbus.Modbus;
 
+
 /**
- * Class implementing a <tt>ReadCommEventCounterResponse</tt>.
+ * Class implementing a <tt>Read MEI Data</tt> request.
  * 
  * @author Julie Haugh (jfh@ghgande.com)
+ * @version jamod-1.2rc1-ghpc
  * 
+ * @author jfhaugh (jfh@ghgande.com)
  * @version @version@ (@date@)
  */
-public final class ReadCommEventCounterResponse extends ModbusResponse {
-
-	/*
-	 * Message fields.
-	 */
-	private int m_Status;
-	private int m_Events;
+public final class ReadCommEventLogRequest extends ModbusRequest {
 
 	/**
-	 * Constructs a new <tt>ReportSlaveIDResponse</tt> instance.
+	 * createResponse -- create an empty response for this request.
 	 */
-	public ReadCommEventCounterResponse() {
-		super();
+	public ModbusResponse getResponse() {
+		ReadCommEventLogResponse response = null;
 
-		setFunctionCode(Modbus.READ_COMM_EVENT_COUNTER);
-		setDataLength(4);
+		response = new ReadCommEventLogResponse();
+
+		/*
+		 * Copy any header data from the request.
+		 */
+		response.setHeadless(isHeadless());
+		if (! isHeadless()) {
+			response.setTransactionID(getTransactionID());
+			response.setProtocolID(getProtocolID());
+		}
+		
+		/*
+		 * Copy the unit ID and function code.
+		 */
+		response.setUnitID(getUnitID());
+		response.setFunctionCode(getFunctionCode());
+
+		return response;
+	}
+	
+	/**
+	 * The ModbusCoupler doesn't have a means of reporting the slave
+	 * state or ID information.
+	 */
+	public ModbusResponse createResponse() {
+		throw new RuntimeException();
 	}
 
 	/**
-	 * getStatus -- get the device's status.
-	 * 
-	 * @return
-	 */
-	public int getStatus() {
-		return m_Status;
-	}
-
-	/**
-	 * setStatus -- set the device's status.
-	 * 
-	 * @param status
-	 */
-	public void setStatus(int status) {
-		m_Status = status;
-	}
-
-	/**
-	 * getEvents -- get device's event counter.
-	 */
-	public int getEventCount() {
-		return m_Events;
-	}
-
-	/**
-	 * setEvents -- set the device's event counter.
-	 */
-	public void setEventCount(int count) {
-		m_Events = count;
-	}
-
-	/**
-	 * writeData -- output the completed Modbus message to dout
+	 * writeData -- output this Modbus message to dout.
 	 */
 	public void writeData(DataOutput dout) throws IOException {
 		dout.write(getMessage());
 	}
 
 	/**
-	 * readData -- input the Modbus message from din. If there was a header,
-	 * such as for Modbus/TCP, it will have been read already.
+	 * readData -- dummy function.  There is no data with the request.
 	 */
 	public void readData(DataInput din) throws IOException {
-		m_Status = din.readShort();
-		m_Events = din.readShort();
 	}
 
 	/**
-	 * getMessage -- format the message into a byte array.
+	 * getMessage -- return an empty array as there is no data for
+	 * 		this request.
 	 */
 	public byte[] getMessage() {
-		byte result[] = new byte[4];
+		byte	results[] = new byte[0];
 
-		result[0] = (byte) (m_Status >> 8);
-		result[1] = (byte) (m_Status & 0xFF);
-		result[2] = (byte) (m_Events >> 8);
-		result[3] = (byte) (m_Events & 0xFF);
+		return results;
+	}
 
-		return result;
+	/**
+	 * Constructs a new <tt>Report Slave ID request</tt>
+	 * instance.
+	 */
+	public ReadCommEventLogRequest() {
+		super();
+		
+		setFunctionCode(Modbus.READ_COMM_EVENT_LOG);
+		
+		/*
+		 * There is no additional data in this request.
+		 */
+		setDataLength(0);
 	}
 }
