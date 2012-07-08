@@ -190,7 +190,7 @@ public final class ReadFileRecordRequest extends ModbusRequest {
 	}
 
 	/**
-	 * createResponse -- create an empty response for this request.
+	 * getResponse -- get an empty response for this message.
 	 */
 	public ModbusResponse getResponse() {
 		ReadFileRecordResponse response = null;
