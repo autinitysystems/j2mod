@@ -266,7 +266,7 @@ public class ModbusRTUTransport extends ModbusSerialTransport {
 				case Modbus.READ_INPUT_DISCRETES:
 				case Modbus.READ_MULTIPLE_REGISTERS:
 				case Modbus.READ_INPUT_REGISTERS:
-				case Modbus.GET_COMM_EVENT_LOG:
+				case Modbus.READ_COMM_EVENT_LOG:
 				case Modbus.REPORT_SLAVE_ID:
 				case Modbus.READ_FILE_RECORD:
 				case Modbus.WRITE_FILE_RECORD:
@@ -310,10 +310,10 @@ public class ModbusRTUTransport extends ModbusSerialTransport {
 					break;
 				case Modbus.WRITE_COIL:
 				case Modbus.WRITE_SINGLE_REGISTER:
-				case Modbus.GET_COMM_EVENT_COUNTER:
+				case Modbus.READ_COMM_EVENT_COUNTER:
 				case Modbus.WRITE_MULTIPLE_COILS:
 				case Modbus.WRITE_MULTIPLE_REGISTERS:
-				case Modbus.GET_SERIAL_DIAGNOSTICS:
+				case Modbus.READ_SERIAL_DIAGNOSTICS:
 					/*
 					 * read status: only the CRC remains after the two data
 					 * words.
