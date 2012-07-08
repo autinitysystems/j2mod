@@ -77,7 +77,7 @@ public class ModbusTCPListener implements Runnable {
 		} catch (UnknownHostException ex) {
 
 		}
-	}// constructor
+	}
 
 	/**
 	 * Constructs a ModbusTCPListener instance.<br>
@@ -91,7 +91,7 @@ public class ModbusTCPListener implements Runnable {
 	public ModbusTCPListener(int poolsize, InetAddress addr) {
 		m_ThreadPool = new ThreadPool(poolsize);
 		m_Address = addr;
-	}// constructor
+	}
 
 	/**
 	 * Sets the port to be listened to.
@@ -102,9 +102,24 @@ public class ModbusTCPListener implements Runnable {
 	public void setPort(int port) {
 		m_Port = port;
 	}
+	
+	/**
+	 * Gets the unit number supported by this Modbus/TCP connection. A
+	 * Modbus/TCP connection, by default, supports unit 0, but may also support
+	 * a fixed unit number, or a range of unit numbers if the device is a
+	 * Modbus/TCP gateway.  If the unit number is non-zero, all packets for
+	 * any other unit number should be discarded.
+	 * 
+	 * @returns unit number supported by this interface.
+	 */
+	public int getUnit() {
+		return m_Unit;
+	}
 
 	/**
-	 * Sets the unit number to be listened for.
+	 * Sets the unit number to be listened for.  A Modbus/TCP connection, by
+	 * default, supports unit 0, but may also support a fixed unit number, or a
+	 * range of unit numbers if the device is a Modbus/TCP gateway.
 	 * 
 	 * @param unit
 	 *            the number of the Modbus unit as <tt>int</tt>.
