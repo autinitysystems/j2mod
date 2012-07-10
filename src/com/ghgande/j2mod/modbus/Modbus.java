@@ -104,21 +104,21 @@ public interface Modbus {
    * 
    * Serial devices only.
    */
-  public static final int GET_SERIAL_DIAGNOSTICS = 8;
+  public static final int READ_SERIAL_DIAGNOSTICS = 8;
   
   /**
    * <tt>get comm event counter</tt>
    * 
    * Serial devices only.
    */
-  public static final int GET_COMM_EVENT_COUNTER = 11;
+  public static final int READ_COMM_EVENT_COUNTER = 11;
   
   /**
    * <tt>get comm event log</tt>
    * 
    * Serial devices only.
    */
-  public static final int GET_COMM_EVENT_LOG = 12;
+  public static final int READ_COMM_EVENT_LOG = 12;
   
   /**
    * Defines a standard function code
