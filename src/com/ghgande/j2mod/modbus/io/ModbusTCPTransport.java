@@ -50,36 +50,34 @@ import com.ghgande.j2mod.modbus.msg.ModbusRequest;
 import com.ghgande.j2mod.modbus.msg.ModbusResponse;
 import com.ghgande.j2mod.modbus.util.ModbusUtil;
 
-
 /**
- * Class that implements the Modbus transport
- * flavor.
- *
+ * Class that implements the Modbus transport flavor.
+ * 
  * @author Dieter Wimberger
  * @version 1.2rc1 (09/11/2004)
  * 
- * @version 110410-jfh
- * Cleaned up unused variables.
- * Stopped spewing out error messages.
+ * @version 110410-jfh Cleaned up unused variables. Stopped spewing out error
+ *          messages.
  */
 public class ModbusTCPTransport implements ModbusTransport {
 
-	//instance attributes
-	private DataInputStream m_Input;	  //input stream
-	private DataOutputStream m_Output;	 //output stream
+	// instance attributes
+	private DataInputStream m_Input; // input stream
+	private DataOutputStream m_Output; // output stream
 	private BytesInputStream m_ByteIn;
-	private BytesOutputStream m_ByteOut;      //write frames
+	private BytesOutputStream m_ByteOut; // write frames
 	private int m_Timeout = Modbus.DEFAULT_TIMEOUT;
-	private	Socket m_Socket = null;
-	private boolean	headless = false;	// Some TCP implementations are.
-
+	private Socket m_Socket = null;
+	private boolean headless = false; // Some TCP implementations are.
 
 	/**
-	 * Sets the <tt>Socket</tt> used for message transport and
-	 * prepares the streams used for the actual I/O.
-	 *
-	 * @param socket the <tt>Socket</tt> used for message transport.
-	 * @throws IOException if an I/O related error occurs.
+	 * Sets the <tt>Socket</tt> used for message transport and prepares the
+	 * streams used for the actual I/O.
+	 * 
+	 * @param socket
+	 *            the <tt>Socket</tt> used for message transport.
+	 * @throws IOException
+	 *             if an I/O related error occurs.
 	 */
 	public void setSocket(Socket socket) throws IOException {
 		if (m_Socket != null) {
@@ -90,7 +88,7 @@ public class ModbusTCPTransport implements ModbusTransport {
 		setTimeout(m_Timeout);
 
 		prepareStreams(socket);
-	}//setSocket
+	}// setSocket
 
 	public void setHeadless() {
 		headless = true;
@@ -98,7 +96,7 @@ public class ModbusTCPTransport implements ModbusTransport {
 
 	public void setTimeout(int time) {
 		m_Timeout = time;
-		
+
 		if (m_Socket != null) {
 			try {
 				m_Socket.setSoTimeout(time);
@@ -113,18 +111,18 @@ public class ModbusTCPTransport implements ModbusTransport {
 		m_Input.close();
 		m_Output.close();
 		m_Socket.close();
-	}//close
+	}// close
 
-	public void writeMessage(ModbusMessage msg)
-	throws ModbusIOException {
+	public void writeMessage(ModbusMessage msg) throws ModbusIOException {
 		try {
 			byte message[] = msg.getMessage();
 
 			m_ByteOut.reset();
-			if (! headless) {
+			if (!headless) {
 				m_ByteOut.writeShort(msg.getTransactionID());
 				m_ByteOut.writeShort(msg.getProtocolID());
-				m_ByteOut.writeShort((message != null ? message.length:0) + 2);
+				m_ByteOut
+						.writeShort((message != null ? message.length : 0) + 2);
 			}
 			m_ByteOut.writeByte(msg.getUnitID());
 			m_ByteOut.writeByte(msg.getFunctionCode());
@@ -133,37 +131,48 @@ public class ModbusTCPTransport implements ModbusTransport {
 
 			m_Output.write(m_ByteOut.toByteArray());
 			m_Output.flush();
-			//write more sophisticated exception handling
+			if (Modbus.debug)
+				System.err.println("Sent: "
+						+ ModbusUtil.toHex(m_ByteOut.toByteArray()));
+			// write more sophisticated exception handling
 		} catch (Exception ex) {
 			throw new ModbusIOException("I/O exception - failed to write.");
 		}
-	}//write
+	}
 
 	/**
-	 * readRequest -- Read a Modbus TCP encoded request.  The packet has a 6 byte
+	 * readRequest -- Read a Modbus TCP encoded request. The packet has a 6 byte
 	 * header containing the protocol, transaction ID and length.
+	 * 
+	 * @returns Modbus response for message
+	 * @throws ModbusIOException
 	 */
-	public ModbusRequest readRequest()
-	throws ModbusIOException {
+	public ModbusRequest readRequest() throws ModbusIOException {
 
-		try {
+	try {
 			ModbusRequest req = null;
 			m_ByteIn.reset();
 
 			synchronized (m_ByteIn) {
 				byte[] buffer = m_ByteIn.getBuffer();
 
-				if (! headless) {
+				if (!headless) {
 					if (m_Input.read(buffer, 0, 6) == -1)
-						throw new EOFException("Premature end of stream (Header truncated).");
+						throw new EOFException(
+								"Premature end of stream (Header truncated).");
 
 					int transaction = ModbusUtil.registerToShort(buffer, 0);
 					int protocol = ModbusUtil.registerToShort(buffer, 2);
 					int count = ModbusUtil.registerToShort(buffer, 4);
 
 					if (m_Input.read(buffer, 6, count) == -1)
-						throw new ModbusIOException("Premature end of stream (Message truncated).");
+						throw new ModbusIOException(
+								"Premature end of stream (Message truncated).");
 
+					if (Modbus.debug)
+						System.err.println("Read: "
+								+ ModbusUtil.toHex(buffer));
+					
 					m_ByteIn.reset(buffer, (6 + count));
 					m_ByteIn.skip(6);
 
@@ -174,13 +183,14 @@ public class ModbusTCPTransport implements ModbusTransport {
 					req = ModbusRequest.createModbusRequest(functionCode);
 					req.setUnitID(unit);
 					req.setHeadless(false);
-					
+
 					req.setTransactionID(transaction);
 					req.setProtocolID(protocol);
 					req.setDataLength(count);
-					
+
 					req.readFrom(m_ByteIn);
 				} else {
+					
 					/*
 					 * This is a headless request.
 					 */
@@ -190,14 +200,16 @@ public class ModbusTCPTransport implements ModbusTransport {
 					req = ModbusRequest.createModbusRequest(function);
 					req.setUnitID(unit);
 					req.setHeadless(true);
-					
+
 					req.readData(m_Input);
-					
+
 					/*
-					 * Discard the CRC.  This is a TCP/IP connection,
-					 * which has proper error correction and recovery.
+					 * Discard the CRC. This is a TCP/IP connection, which has
+					 * proper error correction and recovery.
 					 */
 					m_Input.readShort();
+					if (Modbus.debug)
+						System.err.println("Read: "	+ req.getHexMessage());
 				}
 			}
 			return req;
@@ -212,41 +224,46 @@ public class ModbusTCPTransport implements ModbusTransport {
 		}
 	}
 
-	public ModbusResponse readResponse()
-		throws ModbusIOException {
+	public ModbusResponse readResponse() throws ModbusIOException {
 
 		try {
 
 			ModbusResponse response = null;
 
 			synchronized (m_ByteIn) {
-				//use same buffer
+				// use same buffer
 				byte[] buffer = m_ByteIn.getBuffer();
-
-				if (! headless) {
+				if (Modbus.debug)
+					System.err.println("Read: " +
+							ModbusUtil.toHex(buffer, 0, m_ByteIn.count));
+				
+				if (!headless) {
 					/*
-					 * All Modbus TCP transactions start with 6 bytes.  Get them.
+					 * All Modbus TCP transactions start with 6 bytes. Get them.
 					 */
 					if (m_Input.read(buffer, 0, 6) == -1)
-						throw new ModbusIOException("Premature end of stream (Header truncated).");
+						throw new ModbusIOException(
+								"Premature end of stream (Header truncated).");
 
 					/*
-					 * The transaction ID is the first word (offset 0) in the data
-					 * that was just read.  It will be echoed back to the requester.
+					 * The transaction ID is the first word (offset 0) in the
+					 * data that was just read. It will be echoed back to the
+					 * requester.
 					 * 
-					 * The protocol ID is the second word (offset 2) in the data.
-					 * It should always be 0, but I don't check.
+					 * The protocol ID is the second word (offset 2) in the
+					 * data. It should always be 0, but I don't check.
 					 * 
-					 * The length of the payload is the third word (offset 4) in the
-					 * data that was just read.  That's what I need in order to
-					 * read the rest of the response.
+					 * The length of the payload is the third word (offset 4) in
+					 * the data that was just read. That's what I need in order
+					 * to read the rest of the response.
 					 */
 					int transaction = ModbusUtil.registerToShort(buffer, 0);
 					int protocol = ModbusUtil.registerToShort(buffer, 2);
 					int count = ModbusUtil.registerToShort(buffer, 4);
 
 					if (m_Input.read(buffer, 6, count) == -1)
-						throw new ModbusIOException("Premature end of stream (Message truncated).");
+						throw new ModbusIOException(
+								"Premature end of stream (Message truncated).");
 
 					m_ByteIn.reset(buffer, (6 + count));
 
@@ -261,13 +278,13 @@ public class ModbusTCPTransport implements ModbusTransport {
 					 */
 					m_ByteIn.reset();
 					response.readFrom(m_ByteIn);
-					
+
 					response.setTransactionID(transaction);
 					response.setProtocolID(protocol);
 				} else {
 					/*
-					 * This is a headless response.  It has the same
-					 * format as a RTU over Serial response.
+					 * This is a headless response. It has the same format as a
+					 * RTU over Serial response.
 					 */
 					int unit = m_Input.readByte();
 					int function = m_Input.readByte();
@@ -276,10 +293,10 @@ public class ModbusTCPTransport implements ModbusTransport {
 					response.setUnitID(unit);
 					response.setHeadless();
 					response.readData(m_Input);
-					
+
 					/*
-					 * Now discard the CRC.  Which hopefully wasn't
-					 * needed because this is a TCP transport.
+					 * Now discard the CRC. Which hopefully wasn't needed
+					 * because this is a TCP transport.
 					 */
 					m_Input.readShort();
 				}
@@ -293,18 +310,19 @@ public class ModbusTCPTransport implements ModbusTransport {
 	}
 
 	/**
-	 * Prepares the input and output streams of this
-	 * <tt>ModbusTCPTransport</tt> instance based on the given
-	 * socket.
-	 *
-	 * @param socket the socket used for communications.
-	 * @throws IOException if an I/O related error occurs.
+	 * Prepares the input and output streams of this <tt>ModbusTCPTransport</tt>
+	 * instance based on the given socket.
+	 * 
+	 * @param socket
+	 *            the socket used for communications.
+	 * @throws IOException
+	 *             if an I/O related error occurs.
 	 */
 	private void prepareStreams(Socket socket) throws IOException {
-		
+
 		/*
-		 * Close any open streams if I'm being called because a new
-		 * socket was set to handle this transport.
+		 * Close any open streams if I'm being called because a new socket was
+		 * set to handle this transport.
 		 */
 		try {
 			if (m_Input != null)
@@ -315,30 +333,32 @@ public class ModbusTCPTransport implements ModbusTransport {
 		} catch (IOException x) {
 			// Do nothing.
 		}
-		
-		m_Input = new DataInputStream(
-				new BufferedInputStream(socket.getInputStream()));
 
-		m_Output = new DataOutputStream(
-				new BufferedOutputStream(socket.getOutputStream()));
+		m_Input = new DataInputStream(new BufferedInputStream(
+				socket.getInputStream()));
+
+		m_Output = new DataOutputStream(new BufferedOutputStream(
+				socket.getOutputStream()));
 
 		m_ByteIn = new BytesInputStream(Modbus.MAX_MESSAGE_LENGTH);
 
 		m_ByteOut = new BytesOutputStream(Modbus.MAX_MESSAGE_LENGTH);
 	}
-	
+
 	/**
-	 * Constructs a new <tt>ModbusTransport</tt> instance,
-	 * for a given <tt>Socket</tt>.
+	 * Constructs a new <tt>ModbusTransport</tt> instance, for a given
+	 * <tt>Socket</tt>.
 	 * <p>
-	 * @param socket the <tt>Socket</tt> used for message transport.
+	 * 
+	 * @param socket
+	 *            the <tt>Socket</tt> used for message transport.
 	 */
 	public ModbusTCPTransport(Socket socket) {
 		try {
 			setSocket(socket);
 			socket.setSoTimeout(m_Timeout);
 		} catch (IOException ex) {
-			if(Modbus.debug)
+			if (Modbus.debug)
 				System.out.println("ModbusTCPTransport::Socket invalid.");
 
 			throw new IllegalStateException("Socket invalid.");
