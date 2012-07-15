@@ -115,6 +115,8 @@ public final class ReadMEIRequest extends ModbusRequest {
 		super();
 
 		setFunctionCode(Modbus.READ_MEI);
+		m_SubCode = 0x0E;
+		
 		// 3 bytes (unit id and function code is excluded)
 		setDataLength(3);
 		setLevel(level);
