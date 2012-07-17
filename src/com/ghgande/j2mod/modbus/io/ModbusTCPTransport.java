@@ -171,7 +171,7 @@ public class ModbusTCPTransport implements ModbusTransport {
 
 					if (Modbus.debug)
 						System.err.println("Read: "
-								+ ModbusUtil.toHex(buffer));
+								+ ModbusUtil.toHex(buffer, 0, count + 6));
 					
 					m_ByteIn.reset(buffer, (6 + count));
 					m_ByteIn.skip(6);
