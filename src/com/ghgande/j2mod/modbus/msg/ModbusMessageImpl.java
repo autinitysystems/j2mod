@@ -216,8 +216,14 @@ public abstract class ModbusMessageImpl implements ModbusMessage {
 	 */
 	public abstract void writeData(DataOutput dout) throws IOException;
 
+	/**
+	 * readFrom -- Read the headers and data for a message.  The sub-classes
+	 * 	readData() method will then read in the rest of the message.
+	 * 
+	 * @param din -- Input source
+	 */
 	public void readFrom(DataInput din) throws IOException {
-		if (!isHeadless()) {
+		if (! isHeadless()) {
 			setTransactionID(din.readUnsignedShort());
 			setProtocolID(din.readUnsignedShort());
 			m_DataLength = din.readUnsignedShort();
@@ -225,7 +231,7 @@ public abstract class ModbusMessageImpl implements ModbusMessage {
 		setUnitID(din.readUnsignedByte());
 		setFunctionCode(din.readUnsignedByte());
 		readData(din);
-	}// readFrom
+	}
 
 	/**
 	 * Reads the subclass specific data from the given DataInput instance.
