@@ -198,7 +198,7 @@ public class ModbusTCPTransaction implements ModbusTransaction {
 		 * is read immediately after being written, with no flushing of buffers.
 		 */
 		int retryCounter = 0;
-		while (retryCounter <= m_Retries) {
+		while (retryCounter < (m_Retries > 0 ? m_Retries:1)) {
 			try {
 				synchronized (m_IO) {
 					m_IO.writeMessage(m_Request);
