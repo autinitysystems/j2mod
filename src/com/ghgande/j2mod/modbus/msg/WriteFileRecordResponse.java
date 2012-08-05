@@ -1,6 +1,38 @@
 //License
 /***
- * Java Modbus Library (jamod)
+ * Java Modbus Library (a2mod)
+ * Copyright (c) 2002-2004, jamod development team
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * Neither the name of the author nor the names of its contributors
+ * may be used to endorse or promote products derived from this software
+ * without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS ``AS
+ * IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ ***/
+/***
+ * Java Modbus Library (a2mod)
  * Copyright (c) 2002-2004, jamod development team
  * All rights reserved.
  *
@@ -38,14 +70,13 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 import com.ghgande.j2mod.modbus.Modbus;
-import com.ghgande.j2mod.modbus.msg.WriteFileRecordRequest.RecordRequest;
 import com.ghgande.j2mod.modbus.procimg.SimpleRegister;
 
 /**
  * Class implementing a <tt>WriteFileRecordResponse</tt>.
  * 
- * @author Dieter Wimberger
- * @version 1.2rc1 (09/11/2004)
+ * @author Julie
+ * @version 0.96
  */
 public final class WriteFileRecordResponse extends ModbusResponse {
 	private int m_ByteCount;
@@ -158,9 +189,9 @@ public final class WriteFileRecordResponse extends ModbusResponse {
 	}
 	
 	/**
-	 * addRequest -- add a new record request.
+	 * addResponse -- add a new record response.
 	 */
-	public void addRequest(RecordResponse response) {
+	public void addResponse(RecordResponse response) {
 		if (response.getResponseSize() + getResponseSize() > 248)
 			throw new IllegalArgumentException();
 		
@@ -184,25 +215,37 @@ public final class WriteFileRecordResponse extends ModbusResponse {
 	public void readData(DataInput din) throws IOException {
 		m_ByteCount = din.readUnsignedByte();
 
-		int recordCount = m_ByteCount / 7;
-		m_Records = new RecordResponse[recordCount];
+		m_Records = new RecordResponse[0];
 
-		for (int i = 0; i < recordCount; i++) {
-			if (din.readByte() != 6)
-				throw new IOException();
-
+		for (int offset = 1; offset + 7 < m_ByteCount;) {
+			int function = din.readUnsignedByte();
 			int file = din.readUnsignedShort();
 			int record = din.readUnsignedShort();
+			int count = din.readUnsignedShort();
 			
+			offset += 7;
+			
+			if (function != 6)
+				throw new IOException();
+				
 			if (record < 0 || record >= 10000)
 				throw new IOException();
 
-			int count = din.readUnsignedShort();
+			if (count < 0 || count >= 126)
+				throw new IOException();
+
 			short registers[] = new short[count];
 			for (int j = 0;j < count;j++) {
 				registers[j] = din.readShort();
+				offset += 2;
 			}
-			m_Records[i] = new RecordResponse(file, record, registers);
+			RecordResponse dummy[] = new RecordResponse[m_Records.length + 1];
+			if (m_Records.length > 0)
+				System.arraycopy(m_Records, 0, dummy, 0, m_Records.length);
+			
+			m_Records = dummy;
+			m_Records[m_Records.length - 1] =
+					new RecordResponse(file, record, registers);
 		}
 	}
 

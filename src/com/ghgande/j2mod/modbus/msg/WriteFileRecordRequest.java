@@ -38,7 +38,6 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 import com.ghgande.j2mod.modbus.Modbus;
-import com.ghgande.j2mod.modbus.msg.ReadFileRecordRequest.RecordRequest;
 import com.ghgande.j2mod.modbus.procimg.SimpleRegister;
 
 
@@ -183,9 +182,9 @@ public final class WriteFileRecordRequest extends ModbusRequest {
 	 * createResponse -- create an empty response for this request.
 	 */
 	public ModbusResponse getResponse() {
-		ReportSlaveIDResponse response = null;
+		WriteFileRecordResponse response = null;
 
-		response = new ReportSlaveIDResponse();
+		response = new WriteFileRecordResponse();
 
 		/*
 		 * Copy any header data from the request.
@@ -220,30 +219,42 @@ public final class WriteFileRecordRequest extends ModbusRequest {
 	}
 
 	/**
-	 * readData -- dummy function.  There is no data with the request.
+	 * readData -- convert the byte stream into a request.
 	 */
 	public void readData(DataInput din) throws IOException {
 		m_ByteCount = din.readUnsignedByte();
 
-		int recordCount = m_ByteCount / 7;
-		m_Records = new RecordRequest[recordCount];
+		m_Records = new RecordRequest[0];
 
-		for (int i = 0; i < recordCount; i++) {
-			if (din.readByte() != 6)
-				throw new IOException();
-
+		for (int offset = 1; offset + 7 < m_ByteCount;) {
+			int function = din.readUnsignedByte();
 			int file = din.readUnsignedShort();
 			int record = din.readUnsignedShort();
+			int count = din.readUnsignedShort();
 			
+			offset += 7;
+			
+			if (function != 6)
+				throw new IOException();
+				
 			if (record < 0 || record >= 10000)
 				throw new IOException();
 
-			int count = din.readUnsignedShort();
+			if (count < 0 || count >= 126)
+				throw new IOException();
+
 			short registers[] = new short[count];
 			for (int j = 0;j < count;j++) {
 				registers[j] = din.readShort();
+				offset += 2;
 			}
-			m_Records[i] = new RecordRequest(file, record, registers);
+			RecordRequest dummy[] = new RecordRequest[m_Records.length + 1];
+			if (m_Records.length > 0)
+				System.arraycopy(m_Records, 0, dummy, 0, m_Records.length);
+			
+			m_Records = dummy;
+			m_Records[m_Records.length - 1] =
+					new RecordRequest(file, record, registers);
 		}
 	}
 
