@@ -31,6 +31,39 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  ***/
+/**
+ * Java Modbus Library (j2mod)
+ * Copyright (c) 2012, Julianne Frances Haugh
+ * d/b/a greenHouse Gas and Electric
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * Neither the name of the author nor the names of its contributors
+ * may be used to endorse or promote products derived from this software
+ * without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS ``AS
+ * IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 package com.ghgande.j2mod.modbus.msg;
 
 import java.io.DataInput;
@@ -70,13 +103,26 @@ public final class ReadFileRecordResponse extends ModbusResponse {
 
 		/**
 		 * getResponseSize -- return the size of the response in bytes.
+		 * 
+		 * The response is a byte count, a function code, then wordCount
+		 * words (2 bytes).
 		 */
 		public int getResponseSize() {
-			return 2 + m_WordCount * 2;
+			return 2 + (m_WordCount * 2);
 		}
 
+		/**
+		 * getResponse - return the response data for this record
+		 * 
+		 * The response data is the byte size of the response, minus this
+		 * byte, the function code (6), then the raw byte data for the
+		 * registers (m_WordCount * 2 bytes).
+		 * 
+		 * @param request
+		 * @param offset
+		 */
 		public void getResponse(byte[] request, int offset) {
-			request[offset] = (byte) (2 + m_WordCount * 2);
+			request[offset] = (byte) (1 + (m_WordCount * 2));
 			request[offset + 1] = 6;
 			
 			System.arraycopy(m_Data, 0, request, offset + 2, m_Data.length);
@@ -103,10 +149,13 @@ public final class ReadFileRecordResponse extends ModbusResponse {
 	}
 
 	private int m_ByteCount;
-	private	RecordResponse[] m_Records;
+	private	RecordResponse[] m_Records = null;
 
 	/**
 	 * Returns the number of bytes needed for the response.
+	 * 
+	 * The response is 1 byte for the total response size, plus
+	 * the sum of the sizes of all the records in the response.
 	 * 
 	 * @return the number of bytes in the response.
 	 */
@@ -119,6 +168,18 @@ public final class ReadFileRecordResponse extends ModbusResponse {
 			size += m_Records[i].getResponseSize();
 		
 		return size;
+	}
+	
+	/**
+	 * getRecordCount -- return the number of records in the response.
+	 * 
+	 * @return count of records in response.
+	 */
+	public int getRecordCount() {
+		if (m_Records == null)
+			return 0;
+		
+		return m_Records.length;
 	}
 
 	/**
@@ -144,7 +205,7 @@ public final class ReadFileRecordResponse extends ModbusResponse {
 	}
 
 	public void writeData(DataOutput dout) throws IOException {
-		dout.writeByte(getByteCount());
+		dout.writeByte(getByteCount() - 1);
 
 		if (m_Records == null)
 			return;
@@ -164,10 +225,10 @@ public final class ReadFileRecordResponse extends ModbusResponse {
 			int function = din.readByte();
 			remainder--;
 			
-			if (function != 6 || length > remainder)
+			if (function != 6 || (length - 1) > remainder) {
 				throw new IOException("Invalid response format");
-			
-			short[] data = new short[length / 2];
+			}
+			short[] data = new short[(length - 1) / 2];
 			for (int i = 0;i < data.length;i++) {
 				data[i] = din.readShort();
 				remainder -= 2;
@@ -187,9 +248,6 @@ public final class ReadFileRecordResponse extends ModbusResponse {
 		result[offset++] = (byte) (result.length - 1);
 
 		for (int i = 0; i < m_Records.length; i++) {
-			result[offset++] = (byte) m_Records[i].getResponseSize();
-			result[offset++] = 6;
-			
 			m_Records[i].getResponse(result, offset);
 			offset += m_Records[i].getWordCount() * 2;
 		}
