@@ -239,13 +239,11 @@ public class WriteRecordTest {
 				 */
 				trans = new ModbusTCPTransaction(connection);
 				trans.setRequest(wrRequest);
-System.err.println("wrRequest = " + wrRequest.getHexMessage());
 
 				/*
 				 * Execute the transaction.
 				 */
 				try {
-System.err.println("execute the request.");
 					trans.execute();
 				} catch (ModbusSlaveException x) {
 					System.err.println("Slave Exception: " +
@@ -262,7 +260,6 @@ System.err.println("execute the request.");
 				}
 				
 				dummy = trans.getResponse();
-System.err.println("response = " + dummy);
 				if (dummy == null) {
 					System.err.println("No response for transaction " + i);
 					continue;
