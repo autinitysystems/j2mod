@@ -164,6 +164,36 @@ public interface ProcessImageImplementation extends ProcessImage {
 	public void removeRegister(Register reg);
 
 	/**
+	 * Sets a new <tt>File</tt> instance at the given reference.
+	 * 
+	 * @param ref
+	 *            the reference as <tt>int</tt>.
+	 * @param reg
+	 *            the new <tt>File</tt> instance to be set.
+	 * 
+	 * @throws IllegalAddressException
+	 *             if the reference is invalid.
+	 */
+	public void setFile(int ref, File reg)
+			throws IllegalAddressException;
+
+	/**
+	 * Adds a new <tt>File</tt> instance.
+	 * 
+	 * @param reg
+	 *            the <tt>File</tt> instance to be added.
+	 */
+	public void addFile(File reg);
+
+	/**
+	 * Removes a given <tt>File</tt> instance.
+	 * 
+	 * @param reg
+	 *            the <tt>File</tt> instance to be removed.
+	 */
+	public void removeFile(File reg);
+
+	/**
 	 * Defines the set state (i.e. <b>true</b>) of a digital input or output.
 	 */
 	public static final byte DIG_TRUE = 1;

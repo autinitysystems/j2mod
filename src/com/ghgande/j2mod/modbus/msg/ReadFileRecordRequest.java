@@ -71,6 +71,14 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 import com.ghgande.j2mod.modbus.Modbus;
+import com.ghgande.j2mod.modbus.ModbusCoupler;
+import com.ghgande.j2mod.modbus.msg.ReadFileRecordResponse.RecordResponse;
+import com.ghgande.j2mod.modbus.procimg.DigitalIn;
+import com.ghgande.j2mod.modbus.procimg.File;
+import com.ghgande.j2mod.modbus.procimg.IllegalAddressException;
+import com.ghgande.j2mod.modbus.procimg.ProcessImage;
+import com.ghgande.j2mod.modbus.procimg.Record;
+import com.ghgande.j2mod.modbus.procimg.Register;
 
 /**
  * Class implementing a <tt>Read File Record</tt> request.
@@ -220,7 +228,50 @@ public final class ReadFileRecordRequest extends ModbusRequest {
 	 * information.
 	 */
 	public ModbusResponse createResponse() {
-		throw new RuntimeException();
+		ReadFileRecordResponse response = null;
+		response = (ReadFileRecordResponse) getResponse();
+
+		/*
+		 * Get the process image.
+		 */
+		ProcessImage procimg = ModbusCoupler.getReference().getProcessImage();
+		
+		/*
+		 * There is a list of requests to be resolved.
+		 */
+		try {
+			for (int i = 0;i < getRequestCount();i++) {
+				RecordRequest recordRequest = getRecord(i);
+				if (recordRequest.getFileNumber() < 0 ||
+						recordRequest.getFileNumber() >= procimg.getFileCount())
+					return createExceptionResponse(Modbus.ILLEGAL_ADDRESS_EXCEPTION);
+					
+				File file = procimg.getFile(recordRequest.getFileNumber());
+				
+				if (recordRequest.getRecordNumber() < 0 ||
+						recordRequest.getRecordNumber() >= file.getRecordCount())
+					return createExceptionResponse(Modbus.ILLEGAL_ADDRESS_EXCEPTION);
+				
+				Record record = file.getRecord(recordRequest.getRecordNumber());
+				int registers = recordRequest.getWordCount();
+				if (record == null && registers != 0)
+					return createExceptionResponse(Modbus.ILLEGAL_ADDRESS_EXCEPTION);
+									
+				short data[] = new short[registers];
+				for (int j = 0;j < registers;j++) {
+					Register register = record.getRegister(j);
+					if (register == null)
+						return createExceptionResponse(Modbus.ILLEGAL_ADDRESS_EXCEPTION);						
+						
+					data[j] = register.toShort();
+				}
+				RecordResponse recordResponse = response.new RecordResponse(data);
+				response.addResponse(recordResponse);
+			}
+		} catch (IllegalAddressException e) {
+			return createExceptionResponse(Modbus.ILLEGAL_ADDRESS_EXCEPTION);
+		}
+		return response;
 	}
 
 	/**

@@ -31,6 +31,39 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  ***/
+/***
+ * Java Modbus Library (j2mod)
+ * Copyright 2012, Julianne Frances Haugh
+ * d/b/a greenHouse Gas and Electric
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * Neither the name of the author nor the names of its contributors
+ * may be used to endorse or promote products derived from this software
+ * without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS ``AS
+ * IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ ***/
 package com.ghgande.j2mod.modbus.procimg;
 
 import java.util.Vector;
@@ -45,6 +78,9 @@ import java.util.Vector;
  * 
  * @author Dieter Wimberger
  * @version 1.2rc1 (09/11/2004)
+ * 
+ * @author Julie
+ *	Added support for files of records.
  */
 public class SimpleProcessImage implements ProcessImageImplementation {
 
@@ -53,6 +89,7 @@ public class SimpleProcessImage implements ProcessImageImplementation {
 	protected Vector<DigitalOut> m_DigitalOutputs;
 	protected Vector<InputRegister> m_InputRegisters;
 	protected Vector<Register> m_Registers;
+	protected Vector<File> m_Files;
 	protected boolean m_Locked = false;
 	protected int m_Unit = 0;
 
@@ -64,6 +101,7 @@ public class SimpleProcessImage implements ProcessImageImplementation {
 		m_DigitalOutputs = new Vector<DigitalOut>();
 		m_InputRegisters = new Vector<InputRegister>();
 		m_Registers = new Vector<Register>();
+		m_Files = new Vector<File>();
 	}
 
 	/**
@@ -75,6 +113,7 @@ public class SimpleProcessImage implements ProcessImageImplementation {
 		m_DigitalOutputs = new Vector<DigitalOut>();
 		m_InputRegisters = new Vector<InputRegister>();
 		m_Registers = new Vector<Register>();
+		m_Files = new Vector<File>();
 		m_Unit = unit;
 	}
 
@@ -83,12 +122,28 @@ public class SimpleProcessImage implements ProcessImageImplementation {
 	 * 
 	 * @return whether or not the process image is locked.
 	 */
-	public boolean isLocked() {
+	public synchronized boolean isLocked() {
 		return m_Locked;
 	}
 
-	public void setLocked(boolean locked) {
+	/**
+	 * setLocked -- lock or unlock the process image.  It is an error
+	 * (false return value) to attempt to lock the process image
+	 * when it is already locked.
+	 * 
+	 * <p>Compatability Note: jamod did not enforce this restriction,
+	 * so it is being handled in a way which is backwards compatible.
+	 * If you wish to determine if you acquired the lock, check the
+	 * return value.  If your code is still based on the jamod
+	 * paradigm, you will ignore the return value and your code will
+	 * function as before.
+	 */
+	public synchronized boolean setLocked(boolean locked) {
+		if (m_Locked && locked)
+			return false;
+		
 		m_Locked = locked;
+		return true;
 	}
 
 	public int getUnitID() {
@@ -216,7 +271,6 @@ public class SimpleProcessImage implements ProcessImageImplementation {
 
 	public InputRegister getInputRegister(int ref)
 			throws IllegalAddressException {
-
 		try {
 			return m_InputRegisters.elementAt(ref);
 		} catch (IndexOutOfBoundsException ex) {
@@ -284,6 +338,50 @@ public class SimpleProcessImage implements ProcessImageImplementation {
 				iregs[i] = getRegister(ref + i);
 			}
 			return iregs;
+		}
+	}
+	
+	public void addFile(File newFile) {
+		if (! isLocked())
+			m_Files.add(newFile);
+	}
+	
+	public void removeFile(File oldFile) {
+		if (! isLocked())
+			m_Files.removeElement(oldFile);
+	}
+	
+	public void setFile(int fileNumber, File file) {
+		if (!isLocked()) {
+			try {
+				m_Files.setElementAt(file, fileNumber);
+			} catch (IndexOutOfBoundsException ex) {
+				throw new IllegalAddressException();
+			}
+		}
+	}
+	
+	public File getFile(int fileNumber) {
+		try {
+			return m_Files.elementAt(fileNumber);
+		} catch (IndexOutOfBoundsException ex) {
+			throw new IllegalAddressException();
+		}		
+	}
+	
+	public int getFileCount() {
+		return m_Files.size();
+	}
+	
+	public File[] getFileRange(int ref, int count) {
+		if (ref < 0 || ref + count > m_Files.size()) {
+			throw new IllegalAddressException();
+		} else {
+			File[] files = new File[count];
+			for (int i = 0; i < files.length; i++) {
+				files[i] = getFile(ref + i);
+			}
+			return files;
 		}
 	}
 }
