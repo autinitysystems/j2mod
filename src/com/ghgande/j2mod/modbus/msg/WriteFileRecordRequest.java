@@ -38,6 +38,13 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 import com.ghgande.j2mod.modbus.Modbus;
+import com.ghgande.j2mod.modbus.ModbusCoupler;
+import com.ghgande.j2mod.modbus.msg.WriteFileRecordResponse.RecordResponse;
+import com.ghgande.j2mod.modbus.procimg.File;
+import com.ghgande.j2mod.modbus.procimg.IllegalAddressException;
+import com.ghgande.j2mod.modbus.procimg.ProcessImage;
+import com.ghgande.j2mod.modbus.procimg.Record;
+import com.ghgande.j2mod.modbus.procimg.Register;
 import com.ghgande.j2mod.modbus.procimg.SimpleRegister;
 
 
@@ -71,7 +78,7 @@ public final class WriteFileRecordRequest extends ModbusRequest {
 
 		public SimpleRegister getRegister(int register) {
 			if (register < 0 || register >= m_WordCount) {
-				throw new IndexOutOfBoundsException("0 <= " +
+				throw new IllegalAddressException("0 <= " +
 						register + " < " + m_WordCount);
 			}
 			byte b1 = m_Data[register * 2];
@@ -208,7 +215,52 @@ public final class WriteFileRecordRequest extends ModbusRequest {
 	 * The ModbusCoupler doesn't have a means of writing file records.
 	 */
 	public ModbusResponse createResponse() {
-		throw new RuntimeException();
+		WriteFileRecordResponse response = null;
+		response = (WriteFileRecordResponse) getResponse();
+
+		/*
+		 * Get the process image.
+		 */
+		ProcessImage procimg = ModbusCoupler.getReference().getProcessImage();
+		
+		/*
+		 * There is a list of requests to be resolved.
+		 */
+		try {
+			for (int i = 0;i < getRequestCount();i++) {
+				RecordRequest recordRequest = getRecord(i);
+				if (recordRequest.getFileNumber() < 0 ||
+						recordRequest.getFileNumber() >= procimg.getFileCount())
+					return createExceptionResponse(Modbus.ILLEGAL_ADDRESS_EXCEPTION);
+					
+				File file = procimg.getFile(recordRequest.getFileNumber());
+				
+				if (recordRequest.getRecordNumber() < 0 ||
+						recordRequest.getRecordNumber() >= file.getRecordCount())
+					return createExceptionResponse(Modbus.ILLEGAL_ADDRESS_EXCEPTION);
+				
+				Record record = file.getRecord(recordRequest.getRecordNumber());
+				int registers = recordRequest.getWordCount();
+				if (record == null && registers != 0)
+					return createExceptionResponse(Modbus.ILLEGAL_ADDRESS_EXCEPTION);
+									
+				short data[] = new short[registers];
+				for (int j = 0;j < registers;j++) {
+					Register register = record.getRegister(j);
+					if (register == null)
+						return createExceptionResponse(Modbus.ILLEGAL_ADDRESS_EXCEPTION);						
+						
+					register.setValue(recordRequest.getRegister(j).getValue());
+					data[j] = recordRequest.getRegister(j).toShort();
+				}
+				RecordResponse recordResponse = response.new RecordResponse(
+						file.getFileNumber(), record.getRecordNumber(), data);
+				response.addResponse(recordResponse);
+			}
+		} catch (IllegalAddressException e) {
+			return createExceptionResponse(Modbus.ILLEGAL_ADDRESS_EXCEPTION);
+		}
+		return response;
 	}
 
 	/**
