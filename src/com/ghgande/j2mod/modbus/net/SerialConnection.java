@@ -31,6 +31,39 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  ***/
+/***
+ * Java Modbus Library (j2mod)
+ * Copyright 2012, Julianne Frances Haugh
+ * d/b/a greenHouse Gas and Electric
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * Neither the name of the author nor the names of its contributors
+ * may be used to endorse or promote products derived from this software
+ * without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS ``AS
+ * IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ ***/
 package com.ghgande.j2mod.modbus.net;
 
 import gnu.io.*;
@@ -55,22 +88,9 @@ public class SerialConnection implements SerialPortEventListener {
 
 	private SerialParameters m_Parameters;
 	private ModbusSerialTransport m_Transport;
-	private CommPortIdentifier m_PortIdentifyer;
 	private SerialPort m_SerialPort;
 	private boolean m_Open;
 	private InputStream m_SerialIn;
-
-	/**
-	 * Creates a SerialConnection object and initilizes variables passed in as
-	 * params.
-	 * 
-	 * @param parameters
-	 *            A SerialParameters object.
-	 */
-	public SerialConnection(SerialParameters parameters) {
-		m_Parameters = parameters;
-		m_Open = false;
-	}// constructor
 
 	/**
 	 * Returns the <tt>ModbusTransport</tt> instance to be used for receiving
@@ -89,30 +109,40 @@ public class SerialConnection implements SerialPortEventListener {
 	 *             if an error occurs.
 	 */
 	public void open() throws Exception {
-
-		// 1. obtain a CommPortIdentifier instance
+		CommPortIdentifier m_PortIdentifier;
+		
 		try {
-			m_PortIdentifyer = CommPortIdentifier
+			/*
+			 * 1. obtain a CommPortIdentifier instance
+			 */
+			m_PortIdentifier = CommPortIdentifier
 					.getPortIdentifier(m_Parameters.getPortName());
-		} catch (NoSuchPortException e) {
-			if (Modbus.debug)
-				System.out.println(e);
-			throw new Exception(e.getMessage());
-		}
-		// System.out.println("Got Port Identifier");
-
-		// 2. open the port, wait for given timeout
-		try {
-			m_SerialPort = (SerialPort) m_PortIdentifyer.open(
+			
+			/*
+			 * open the port, wait for given timeout
+			 */
+			m_SerialPort = (SerialPort) m_PortIdentifier.open(
 					"Modbus Serial Master", 30000);
 		} catch (PortInUseException e) {
 			if (Modbus.debug)
 				System.out.println(e.getMessage());
 
 			throw new Exception(e.getMessage());
-		}
-		// System.out.println("Got Serial Port");
+		} catch (NoSuchPortException e) {
 
+			/*
+			 * It's possible there is no CommPortIdentifier because RXTX does
+			 * not look for all of them.
+			 */
+			try {
+				m_SerialPort = new RXTXPort(m_Parameters.getPortName());
+			} catch (PortInUseException x) {
+				if (Modbus.debug)
+					x.printStackTrace();
+
+				throw new Exception(x.getMessage());
+			}
+		}
 		// 3. set the parameters
 		try {
 			setConnectionParameters();
@@ -245,7 +275,6 @@ public class SerialConnection implements SerialPortEventListener {
 			// Close the port.
 			m_SerialPort.close();
 		}
-
 		m_Open = false;
 	}
 
@@ -275,4 +304,16 @@ public class SerialConnection implements SerialPortEventListener {
 				System.out.println("Serial port event: " + e.getEventType());
 		}
 	}
+
+	/**
+	 * Creates a SerialConnection object and initializes variables passed in as
+	 * params.
+	 * 
+	 * @param parameters
+	 *            A SerialParameters object.
+	 */
+	public SerialConnection(SerialParameters parameters) {
+		m_Parameters = parameters;
+		m_Open = false;
+	}// constructor
 }

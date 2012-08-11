@@ -59,7 +59,14 @@ public class SerialSlaveTest {
 
 		try {
 
-			// 1. Prepare a process image
+			/*
+			 * Prepare a process image.
+			 * 
+			 * The file records from the TCP and UDP test harnesses are
+			 * not included.  They can be added if there is a need to
+			 * test READ FILE RECORD and WRITE FILE RECORD with a Modbus/RTU
+			 * device.
+			 */
 			spi = new SimpleProcessImage();
 			spi.addDigitalOut(new SimpleDigitalOut(true));
 			spi.addDigitalOut(new SimpleDigitalOut(false));
@@ -67,6 +74,7 @@ public class SerialSlaveTest {
 			spi.addDigitalIn(new SimpleDigitalIn(true));
 			spi.addDigitalIn(new SimpleDigitalIn(false));
 			spi.addDigitalIn(new SimpleDigitalIn(true));
+			
 			spi.addRegister(new SimpleRegister(251));
 			spi.addInputRegister(new SimpleInputRegister(45));
 
@@ -77,6 +85,7 @@ public class SerialSlaveTest {
 
 			// 3. Set up serial parameters
 			SerialParameters params = new SerialParameters();
+			
 			params.setPortName(portname);
 			params.setBaudRate(9600);
 			params.setDatabits(8);
@@ -88,9 +97,11 @@ public class SerialSlaveTest {
 				System.out.println("Encoding [" + params.getEncoding() + "]");
 
 			// 4. Set up serial listener
-			listener = new ModbusSerialListener(params);
+			listener = new ModbusSerialListener(params, false);
 			listener.setListening(true);
-
+			
+			// 5. Start the listener thread.
+			new Thread(listener).start();
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
