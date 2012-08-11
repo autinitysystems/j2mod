@@ -49,23 +49,25 @@ import com.ghgande.j2mod.modbus.msg.ReadFileRecordRequest;
 import com.ghgande.j2mod.modbus.msg.ReadFileRecordRequest.RecordRequest;
 import com.ghgande.j2mod.modbus.msg.ReadFileRecordResponse;
 import com.ghgande.j2mod.modbus.msg.ReadFileRecordResponse.RecordResponse;
+import com.ghgande.j2mod.modbus.msg.WriteFileRecordRequest;
+import com.ghgande.j2mod.modbus.msg.WriteFileRecordResponse;
 import com.ghgande.j2mod.modbus.net.TCPMasterConnection;
 
 /**
- * RecordText -- Exercise the "READ FILE RECORD" Modbus
+ * WriteRecordText -- Exercise the "WRITE FILE RECORD" Modbus
  * message.
  * 
  * @author Julie
  * @version 0.96
  */
-public class ReadRecordTest {
+public class TCPWriteRecordTest {
 
 	/**
 	 * usage -- Print command line arguments and exit.
 	 */
 	private static void usage() {
 		System.out.println(
-				"Usage: ReadRecordTest address[:port[:unit]] file record registers [count]");
+				"Usage: TCPWriteRecordTest address[:port[:unit]] file record registers [count]");
 		
 		System.exit(1);
 	}
@@ -75,8 +77,10 @@ public class ReadRecordTest {
 		int			port = Modbus.DEFAULT_PORT;
 		int			unit = 0;
 		TCPMasterConnection connection = null;
-		ReadFileRecordRequest request = null;
-		ReadFileRecordResponse response = null;
+		ReadFileRecordRequest rdRequest = null;
+		ReadFileRecordResponse rdResponse = null;
+		WriteFileRecordRequest wrRequest = null;
+		WriteFileRecordResponse wrResponse = null;
 		ModbusTransaction	trans = null;
 		int			file = 0;
 		int			record = 0;
@@ -150,21 +154,21 @@ public class ReadRecordTest {
 				 * Setup the READ FILE RECORD request.  The record number
 				 * will be incremented for each loop.
 				 */
-				request = new ReadFileRecordRequest();
-				request.setUnitID(unit);
+				rdRequest = new ReadFileRecordRequest();
+				rdRequest.setUnitID(unit);
 				
 				RecordRequest recordRequest =
-						request.new RecordRequest(file, record + i, registers);
-				request.addRequest(recordRequest);
+						rdRequest.new RecordRequest(file, record + i, registers);
+				rdRequest.addRequest(recordRequest);
 				
 				if (Modbus.debug)
-					System.out.println("Request: " + request.getHexMessage());
+					System.out.println("Request: " + rdRequest.getHexMessage());
 
 				/*
 				 * Setup the transaction.
 				 */
 				trans = new ModbusTCPTransaction(connection);
-				trans.setRequest(request);
+				trans.setRequest(rdRequest);
 
 				/*
 				 * Execute the transaction.
@@ -184,6 +188,11 @@ public class ReadRecordTest {
 							x.getLocalizedMessage());
 					continue;					
 				}
+				
+				short values[];
+				
+				wrRequest = new WriteFileRecordRequest();
+				wrRequest.setUnitID(unit);
 
 				ModbusResponse dummy = trans.getResponse();
 				if (dummy == null) {
@@ -197,30 +206,95 @@ public class ReadRecordTest {
 
 					continue;
 				} else if (dummy instanceof ReadFileRecordResponse) {
-					response = (ReadFileRecordResponse) dummy;
+					rdResponse = (ReadFileRecordResponse) dummy;
 
 					if (Modbus.debug)
 						System.out.println("Response: "
-								+ response.getHexMessage());
+								+ rdResponse.getHexMessage());
 
-					int count = response.getRecordCount();
+					int count = rdResponse.getRecordCount();
 					for (int j = 0;j < count;j++) {
-						RecordResponse data = response.getRecord(j);
-						short values[] = new short[data.getWordCount()];
+						RecordResponse data = rdResponse.getRecord(j);
+						values = new short[data.getWordCount()];
 						for (int k = 0;k < data.getWordCount();k++)
 							values[k] = data.getRegister(k).toShort();
 						
-						System.out.println("data[" + j + "] = " +
+						System.out.println("read data[" + j + "] = " +
 								Arrays.toString(values));
+						
+						WriteFileRecordRequest.RecordRequest wrData =
+								wrRequest.new RecordRequest(file, record + i, values);
+						wrRequest.addRequest(wrData);
 					}
-					continue;
+				} else {
+					/*
+					 * Unknown message.
+					 */
+					System.out.println(
+							"Unknown Response: " + dummy.getHexMessage());
 				}
+				
+				/*
+				 * Setup the transaction.
+				 */
+				trans = new ModbusTCPTransaction(connection);
+				trans.setRequest(wrRequest);
 
 				/*
-				 * Unknown message.
+				 * Execute the transaction.
 				 */
-				System.out.println(
-						"Unknown Response: " + dummy.getHexMessage());
+				try {
+					trans.execute();
+				} catch (ModbusSlaveException x) {
+					System.err.println("Slave Exception: " +
+							x.getLocalizedMessage());
+					continue;
+				} catch (ModbusIOException x) {
+					System.err.println("I/O Exception: " +
+							x.getLocalizedMessage());
+					continue;					
+				} catch (ModbusException x) {
+					System.err.println("Modbus Exception: " +
+							x.getLocalizedMessage());
+					continue;					
+				}
+				
+				dummy = trans.getResponse();
+				if (dummy == null) {
+					System.err.println("No response for transaction " + i);
+					continue;
+				}
+				if (dummy instanceof ExceptionResponse) {
+					ExceptionResponse exception = (ExceptionResponse) dummy;
+
+					System.err.println(exception);
+
+					continue;
+				} else if (dummy instanceof WriteFileRecordResponse) {
+					wrResponse = (WriteFileRecordResponse) dummy;
+
+					if (Modbus.debug)
+						System.out.println("Response: "
+								+ wrResponse.getHexMessage());
+
+					int count = wrResponse.getRequestCount();
+					for (int j = 0;j < count;j++) {
+						WriteFileRecordResponse.RecordResponse data =
+								wrResponse.getRecord(j);
+						values = new short[data.getWordCount()];
+						for (int k = 0;k < data.getWordCount();k++)
+							values[k] = data.getRegister(k).toShort();
+						
+						System.out.println("write response data[" + j + "] = " +
+								Arrays.toString(values));
+					}
+				} else {
+					/*
+					 * Unknown message.
+					 */
+					System.out.println(
+							"Unknown Response: " + dummy.getHexMessage());
+				}
 			}
 			
 			/*
