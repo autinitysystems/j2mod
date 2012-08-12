@@ -84,10 +84,11 @@ import com.ghgande.j2mod.modbus.util.SerialParameters;
  * @author Julie Haugh Code cleanup in prep to refactor with ModbusListener
  *         interface
  */
-public class ModbusSerialListener implements Runnable {
+public class ModbusSerialListener implements ModbusListener {
 	private boolean m_Listening;
 	private boolean m_Running = true;
 	private SerialConnection m_SerialCon;
+	private int m_Unit = 0;
 
 	/**
 	 * run
@@ -98,34 +99,54 @@ public class ModbusSerialListener implements Runnable {
 		try {
 			m_Listening = true;
 			m_SerialCon.open();
-			
+
 			ModbusTransport transport = m_SerialCon.getModbusTransport();
 
 			while (m_Running) {
 				if (m_Listening) {
 					try {
-						// 1. read the request
-						ModbusRequest request = transport.readRequest();
-						ModbusResponse response = null;
 
-						// test if Process image exists
+						/*
+						 * Read the request from the serial interface. If this
+						 * instance has been assigned a unit number, it must be
+						 * enforced.
+						 */
+						ModbusRequest request = transport.readRequest();
+						if (m_Unit != 0 && m_Unit != request.getUnitID())
+							continue;
+
+						/*
+						 * Create the response using a ProcessImage. A Modbus
+						 * ILLEGAL FUNCTION exception will be thrown if there is
+						 * no ProcessImage.
+						 */
+						ModbusResponse response = null;
 						if (ModbusCoupler.getReference().getProcessImage() == null) {
-							response = request.createExceptionResponse(
-									Modbus.ILLEGAL_FUNCTION_EXCEPTION);
+							response = request
+									.createExceptionResponse(Modbus.ILLEGAL_FUNCTION_EXCEPTION);
 						} else {
 							response = request.createResponse();
 						}
 
-						if (Modbus.debug)
+						/*
+						 * Log the Request and Response messages.
+						 */
+						if (Modbus.debug) {
 							System.out.println("Request:"
 									+ request.getHexMessage());
-						if (Modbus.debug)
+
 							System.out.println("Response:"
 									+ response.getHexMessage());
+						}
 
+						/*
+						 * Write the response.
+						 */
 						transport.writeMessage(response);
 					} catch (ModbusIOException ex) {
-						ex.printStackTrace();
+						if (Modbus.debug)
+							ex.printStackTrace();
+
 						continue;
 					}
 				} else {
@@ -137,13 +158,37 @@ public class ModbusSerialListener implements Runnable {
 				}
 			}
 		} catch (Exception e) {
-			// FIXME: this is a major failure, how do we handle this
+			/*
+			 * TODO -- Make sure methods are throwing reasonable exceptions, and
+			 * not just throwing "Exception".
+			 */
 			e.printStackTrace();
 		} finally {
+			m_Listening = false;
+
 			if (m_SerialCon != null) {
 				m_SerialCon.close();
 			}
 		}
+	}
+
+	/**
+	 * Sets the Modbus unit number for this <tt>ModbusSerialListener</tt>
+	 * 
+	 * @param unit
+	 *            Modbus unit number
+	 */
+	public void setUnit(int unit) {
+		m_Unit = unit;
+	}
+
+	/**
+	 * Gets the Modbus unit number for this <tt>ModbusSerialListener</tt>
+	 * 
+	 * @returns Modbus unit number
+	 */
+	public int getUnit() {
+		return m_Unit;
 	}
 
 	/**
@@ -175,31 +220,25 @@ public class ModbusSerialListener implements Runnable {
 		m_Listening = false;
 		m_Running = false;
 	}
+	
+	/**
+	 * Start the listener thread for this serial interface.
+	 */
+	public Thread listen() {
+		m_Listening = true;
+		Thread result = new Thread(this);
+		result.start();
+		
+		return result;
+	}
 
 	/**
 	 * Constructs a new <tt>ModbusSerialListener</tt> instance.
 	 * 
 	 * @param params
 	 *            a <tt>SerialParameters</tt> instance.
-	 * @param run
-	 *            the interface is started immediately without a thread.
-	 */
-	public ModbusSerialListener(SerialParameters params, boolean run) {
-		m_SerialCon = new SerialConnection(params);
-		if (run)
-			run();
-	}
-	
-	/**
-	 * Constructs a new <tt>ModbusSerialListener</tt> instance.
-	 * 
-	 * @param params
-	 *            a <tt>SerialParameters</tt> instance.
-	 *            
-	 * @deprecated
 	 */
 	public ModbusSerialListener(SerialParameters params) {
 		m_SerialCon = new SerialConnection(params);
-		run();
 	}
 }

@@ -97,7 +97,7 @@ public class SerialSlaveTest {
 				System.out.println("Encoding [" + params.getEncoding() + "]");
 
 			// 4. Set up serial listener
-			listener = new ModbusSerialListener(params, false);
+			listener = new ModbusSerialListener(params);
 			listener.setListening(true);
 			
 			// 5. Start the listener thread.

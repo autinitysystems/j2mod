@@ -65,7 +65,7 @@ public class TCPSlaveTest {
 			if (args != null && args.length == 1) {
 				port = Integer.parseInt(args[0]);
 			}
-			System.out.println("j2mod Modbus Slave (Server)");
+			System.out.println("j2mod Modbus Slave (Server) v0.97");
 
 			/*
 			 * Create the process image for this test.
@@ -84,11 +84,12 @@ public class TCPSlaveTest {
 					.setRecord(1, new Record(1, 10))
 					.setRecord(2, new Record(2, 10))
 					.setRecord(3, new Record(3, 10))
-					.setRecord(5, new Record(4, 10))
-					.setRecord(6, new Record(5, 10))
-					.setRecord(7, new Record(6, 10))
-					.setRecord(8, new Record(7, 10))
-					.setRecord(9, new Record(8, 10)));
+					.setRecord(4, new Record(4, 10))
+					.setRecord(5, new Record(5, 10))
+					.setRecord(6, new Record(6, 10))
+					.setRecord(7, new Record(7, 10))
+					.setRecord(8, new Record(8, 10))
+					.setRecord(9, new Record(9, 10)));
 			
 			spi.addFile(new File(1, 20)
 					.setRecord(0, new Record(0, 10))
@@ -135,7 +136,7 @@ public class TCPSlaveTest {
 					Inet4Address.getByName("0.0.0.0"));
 			listener.setPort(port);
 			listener.setUnit(unit);
-			listener.start();
+			listener.listen();
 
 		} catch (Exception ex) {
 			ex.printStackTrace();

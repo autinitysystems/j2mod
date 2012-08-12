@@ -89,7 +89,7 @@ import com.ghgande.j2mod.modbus.util.ThreadPool;
  * @author Julie Haugh
  * @version 0.97 (8/11/2012)
  */
-public class ModbusTCPListener implements Runnable {
+public class ModbusTCPListener implements ModbusListener {
 	private ServerSocket m_ServerSocket = null;
 	private ThreadPool m_ThreadPool;
 	private Thread m_Listener;
@@ -98,36 +98,6 @@ public class ModbusTCPListener implements Runnable {
 	private int m_FloodProtection = 5;
 	private boolean m_Listening;
 	private InetAddress m_Address;
-
-	/**
-	 * Constructs a ModbusTCPListener instance.<br>
-	 * 
-	 * @param poolsize
-	 *            the size of the <tt>ThreadPool</tt> used to handle incoming
-	 *            requests.
-	 */
-	public ModbusTCPListener(int poolsize) {
-		m_ThreadPool = new ThreadPool(poolsize);
-		try {
-			m_Address = InetAddress.getLocalHost();
-		} catch (UnknownHostException ex) {
-
-		}
-	}
-
-	/**
-	 * Constructs a ModbusTCPListener instance.<br>
-	 * 
-	 * @param poolsize
-	 *            the size of the <tt>ThreadPool</tt> used to handle incoming
-	 *            requests.
-	 * @param addr
-	 *            the interface to use for listening.
-	 */
-	public ModbusTCPListener(int poolsize, InetAddress addr) {
-		m_ThreadPool = new ThreadPool(poolsize);
-		m_Address = addr;
-	}
 
 	/**
 	 * Sets the port to be listened to.
@@ -176,11 +146,14 @@ public class ModbusTCPListener implements Runnable {
 
 	/**
 	 * Starts this <tt>ModbusTCPListener</tt>.
+	 * 
+	 * @deprecated
 	 */
 	public void start() {
+		m_Listening = true;
+		
 		m_Listener = new Thread(this);
 		m_Listener.start();
-		m_Listening = true;
 	}
 
 	/**
@@ -219,7 +192,9 @@ public class ModbusTCPListener implements Runnable {
 			 * Infinite loop, taking care of resources in case of a lot of
 			 * parallel logins
 			 */
-			do {
+			
+			m_Listening = true;
+			while (m_Listening) {
 				Socket incoming = m_ServerSocket.accept();
 				if (Modbus.debug)
 					System.out.println("Making new connection "
@@ -232,16 +207,28 @@ public class ModbusTCPListener implements Runnable {
 				} else {
 					incoming.close();
 				}
-			} while (m_Listening);
+			};
 		} catch (SocketException iex) {
-			if (!m_Listening) {
+			if (! m_Listening) {
 				return;
 			} else {
-				iex.printStackTrace();
+				if (Modbus.debug)
+					iex.printStackTrace();
 			}
 		} catch (IOException e) {
 			// FIXME: this is a major failure, how do we handle this
 		}
+	}
+	
+	/**
+	 * Set the listening state of this <tt>ModbusTCPListener</tt> object.
+	 * A <tt>ModbusTCPListener</tt> will silently drop any requests if the
+	 * listening state is set to <tt>false</tt>.
+	 * 
+	 * @param b
+	 */
+	public void setListening(boolean b) {
+		m_Listening = b;
 	}
 
 	/**
@@ -253,5 +240,53 @@ public class ModbusTCPListener implements Runnable {
 	 */
 	public boolean isListening() {
 		return m_Listening;
+	}
+	
+	/**
+	 * Start the listener thread for this serial interface.
+	 */
+	public Thread listen() {
+		m_Listening = true;
+		Thread result = new Thread(this);
+		result.start();
+		
+		return result;
+	}
+
+	/**
+	 * Constructs a ModbusTCPListener instance.<br>
+	 * 
+	 * @param poolsize
+	 *            the size of the <tt>ThreadPool</tt> used to handle incoming
+	 *            requests.
+	 * @param addr
+	 *            the interface to use for listening.
+	 */
+	public ModbusTCPListener(int poolsize, InetAddress addr) {
+		m_ThreadPool = new ThreadPool(poolsize);
+		m_Address = addr;
+	}
+
+	/**
+	/**
+	 * Constructs a ModbusTCPListener instance.  This interface is created
+	 * to listen on the wildcard address, which will accept TCP packets
+	 * on all available interfaces.
+	 * 
+	 * @param poolsize
+	 *            the size of the <tt>ThreadPool</tt> used to handle incoming
+	 *            requests.
+	 */
+	public ModbusTCPListener(int poolsize) {
+		m_ThreadPool = new ThreadPool(poolsize);
+		try {
+			/*
+			 * TODO -- Check for an IPv6 interface and listen on that
+			 * interface if it exists.
+			 */
+			m_Address = InetAddress.getByAddress(new byte[] { 0, 0, 0, 0 } );
+		} catch (UnknownHostException ex) {
+			// Can't happen -- size is fixed.
+		}
 	}
 }
