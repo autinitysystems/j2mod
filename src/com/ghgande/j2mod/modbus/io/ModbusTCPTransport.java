@@ -120,6 +120,7 @@ public class ModbusTCPTransport implements ModbusTransport {
 	  public ModbusTransaction createTransaction() {
 		  if (m_Master == null) {
 			  m_Master = new TCPMasterConnection(m_Socket.getInetAddress());
+			  m_Master.setPort(m_Socket.getPort());
 			  m_Master.setModbusTransport(this);
 		  }
 		  ModbusTCPTransaction trans = new ModbusTCPTransaction(m_Master);

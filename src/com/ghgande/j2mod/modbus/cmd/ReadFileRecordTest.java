@@ -33,51 +33,47 @@
  */
 package com.ghgande.j2mod.modbus.cmd;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Arrays;
 
 import com.ghgande.j2mod.modbus.Modbus;
 import com.ghgande.j2mod.modbus.ModbusException;
 import com.ghgande.j2mod.modbus.ModbusIOException;
 import com.ghgande.j2mod.modbus.ModbusSlaveException;
-import com.ghgande.j2mod.modbus.io.ModbusUDPTransaction;
 import com.ghgande.j2mod.modbus.io.ModbusTransaction;
+import com.ghgande.j2mod.modbus.io.ModbusTransport;
 import com.ghgande.j2mod.modbus.msg.ExceptionResponse;
 import com.ghgande.j2mod.modbus.msg.ModbusResponse;
 import com.ghgande.j2mod.modbus.msg.ReadFileRecordRequest;
 import com.ghgande.j2mod.modbus.msg.ReadFileRecordRequest.RecordRequest;
 import com.ghgande.j2mod.modbus.msg.ReadFileRecordResponse;
 import com.ghgande.j2mod.modbus.msg.ReadFileRecordResponse.RecordResponse;
-import com.ghgande.j2mod.modbus.net.UDPMasterConnection;
+import com.ghgande.j2mod.modbus.net.ModbusMasterFactory;
 
 /**
- * UDPRReadRecordText -- Exercise the "READ FILE RECORD" Modbus
+ * ReadFileRecordText -- Exercise the "READ FILE RECORD" Modbus
  * message.
  * 
  * @author Julie
  * @version 0.96
  */
-public class UDPReadRecordTest {
+public class ReadFileRecordTest {
 
 	/**
 	 * usage -- Print command line arguments and exit.
 	 */
 	private static void usage() {
 		System.out.println(
-				"Usage: UDPReadRecordTest address[:port[:unit]] file record registers [count]");
+				"Usage: ReadFileRecord connection unit file record registers [repeat]");
 		
 		System.exit(1);
 	}
 
 	public static void main(String[] args) {
-		InetAddress	ipAddress = null;
-		int			port = Modbus.DEFAULT_PORT;
-		int			unit = 0;
-		UDPMasterConnection connection = null;
+		ModbusTransport	transport = null;
 		ReadFileRecordRequest request = null;
 		ReadFileRecordResponse response = null;
 		ModbusTransaction	trans = null;
+		int			unit = 0;
 		int			file = 0;
 		int			record = 0;
 		int			registers = 0;
@@ -86,45 +82,21 @@ public class UDPReadRecordTest {
 		/*
 		 * Get the command line parameters.
 		 */
-		if (args.length < 4 || args.length > 5)
+		if (args.length < 5 || args.length > 6)
 			usage();
 		
-		String serverAddress = args[0];
-		String parts[] = serverAddress.split(":");
-		String hostName = parts[0];
-		
 		try {
-			/*
-			 * Address is of the form
-			 * 
-			 * hostName:port:unitNumber
-			 * 
-			 * where
-			 * 
-			 * hostName -- Standard text host name
-			 * port		-- Modbus port, 502 is the default
-			 * unit		-- Modbus unit number, 0 is the default
-			 */
-			if (parts.length > 1) {
-				port = Integer.parseInt(parts[1]);
-				
-				if (parts.length > 2)
-					unit = Integer.parseInt(parts[2]);
-			}
-			ipAddress = InetAddress.getByName(hostName);
+			transport = ModbusMasterFactory.createModbusMaster(args[0]);
+			unit = Integer.parseInt(args[1]);
+			file = Integer.parseInt(args[2]);
+			record = Integer.parseInt(args[3]);
+			registers = Integer.parseInt(args[4]);
 			
-			file = Integer.parseInt(args[1]);
-			record = Integer.parseInt(args[2]);
-			registers = Integer.parseInt(args[3]);
-			
-			if (args.length > 4)
-				requestCount = Integer.parseInt(args[4]);
+			if (args.length > 5)
+				requestCount = Integer.parseInt(args[5]);
 		} catch (NumberFormatException x) {
 			System.err.println("Invalid parameter");
 			usage();
-		} catch (UnknownHostException x) {
-			System.err.println("Unknown host: " + hostName);
-			System.exit(1);
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			usage();
@@ -132,19 +104,6 @@ public class UDPReadRecordTest {
 		}
 
 		try {
-			
-			/*
-			 * Setup the UDP connection to the Modbus/UDP Master
-			 */
-			connection = new UDPMasterConnection(ipAddress);
-			connection.setPort(port);
-			connection.connect();
-			connection.setTimeout(500);
-
-			if (Modbus.debug)
-				System.out.println("Connected to " + ipAddress.toString() + ":"
-						+ connection.getPort());
-
 			for (int i = 0; i < requestCount; i++) {
 				/*
 				 * Setup the READ FILE RECORD request.  The record number
@@ -163,7 +122,7 @@ public class UDPReadRecordTest {
 				/*
 				 * Setup the transaction.
 				 */
-				trans = new ModbusUDPTransaction(connection);
+				trans = transport.createTransaction();
 				trans.setRequest(request);
 
 				/*
@@ -210,7 +169,7 @@ public class UDPReadRecordTest {
 						for (int k = 0;k < data.getWordCount();k++)
 							values[k] = data.getRegister(k).toShort();
 						
-						System.out.println("data[" + j + "] = " +
+						System.out.println("data[" + i + "][" + j + "] = " +
 								Arrays.toString(values));
 					}
 					continue;
@@ -226,7 +185,7 @@ public class UDPReadRecordTest {
 			/*
 			 * Teardown the connection.
 			 */
-			connection.close();
+			transport.close();
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
