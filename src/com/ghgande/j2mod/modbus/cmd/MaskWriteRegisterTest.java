@@ -33,15 +33,15 @@
  ***/
 package com.ghgande.j2mod.modbus.cmd;
 
+import java.io.IOException;
 import java.net.InetAddress;
 
 import com.ghgande.j2mod.modbus.Modbus;
-import com.ghgande.j2mod.modbus.io.ModbusTCPTransaction;
 import com.ghgande.j2mod.modbus.io.ModbusTransaction;
+import com.ghgande.j2mod.modbus.io.ModbusTransport;
+import com.ghgande.j2mod.modbus.msg.MaskWriteRegisterRequest;
 import com.ghgande.j2mod.modbus.msg.ModbusRequest;
-import com.ghgande.j2mod.modbus.msg.WriteSingleRegisterRequest;
-import com.ghgande.j2mod.modbus.net.TCPMasterConnection;
-import com.ghgande.j2mod.modbus.procimg.SimpleRegister;
+import com.ghgande.j2mod.modbus.net.ModbusMasterFactory;
 
 /**
  * Class that implements a simple command line tool for writing to an analog
@@ -67,24 +67,23 @@ import com.ghgande.j2mod.modbus.procimg.SimpleRegister;
  * @author jfhaugh
  * @version @version@ (@date@)
  */
-public class AOTest {
+public class MaskWriteRegisterTest {
 
 	private static void printUsage() {
-		System.out.println("java com.ghgande.j2mod.modbus.cmd.AOTest"
+		System.out.println("java com.ghgande.j2mod.modbus.cmd.WriteHoldingRegisterTest"
 				+ " <address{:<port>{:<unit>}} [String]>"
-				+ " <register [int]> <value [int]> {<repeat [int]>}");
+				+ " <register [int]> <andMask [int]> <orMask [int]> {<repeat [int]>}");
 	}
 
 	public static void main(String[] args) {
 
-		InetAddress addr = null;
-		TCPMasterConnection con = null;
+		ModbusTransport transport = null;
 		ModbusRequest req = null;
 		ModbusTransaction trans = null;
 		int ref = 0;
-		int value = 0;
+		int andMask = 0xFFFF;
+		int orMask = 0;
 		int repeat = 1;
-		int port = Modbus.DEFAULT_PORT;
 		int unit = 0;
 
 		// 1. Setup parameters
@@ -95,21 +94,12 @@ public class AOTest {
 
 		try {
 			try {
-				String serverAddress = args[0];
-				String parts[] = serverAddress.split(":");
-
-				String address = parts[0];
-				if (parts.length > 1) {
-					port = Integer.parseInt(parts[1]);
-					if (parts.length > 2)
-						unit = Integer.parseInt(parts[2]);
-				}
-				addr = InetAddress.getByName(address);
 				ref = Integer.parseInt(args[1]);
-				value = Integer.parseInt(args[2]);
+				andMask = Integer.parseInt(args[2]);
+				orMask = Integer.parseInt(args[3]);
 
-				if (args.length == 4)
-					repeat = Integer.parseInt(args[3]);
+				if (args.length == 5)
+					repeat = Integer.parseInt(args[4]);
 			} catch (Exception ex) {
 				ex.printStackTrace();
 				printUsage();
@@ -117,23 +107,19 @@ public class AOTest {
 			}
 
 			// 2. Open the connection
-			con = new TCPMasterConnection(addr);
-			con.setPort(port);
-			con.connect();
+			transport = ModbusMasterFactory.createModbusMaster(args[0]);
 
 			if (Modbus.debug)
-				System.out.println("Connected to " + addr.toString() + ":"
-						+ con.getPort());
+				System.out.println("Connected to " + transport);
 
-			req = new WriteSingleRegisterRequest(ref,
-					new SimpleRegister(value));
+			req = new MaskWriteRegisterRequest(ref, andMask, orMask);
 
 			req.setUnitID(unit);
 			if (Modbus.debug)
 				System.out.println("Request: " + req.getHexMessage());
 
 			// 3. Prepare the transaction
-			trans = new ModbusTCPTransaction(con);
+			trans = transport.createTransaction();
 			trans.setRequest(req);
 
 			// 4. Execute the transaction repeat times
@@ -148,7 +134,11 @@ public class AOTest {
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		} finally {
-			con.close();
+			try {
+				transport.close();
+			} catch (IOException e) {
+				// Do nothing.
+			}
 		}
 	}
 }

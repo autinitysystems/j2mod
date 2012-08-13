@@ -33,114 +33,109 @@
  ***/
 package com.ghgande.j2mod.modbus.cmd;
 
+import java.io.IOException;
 import java.net.InetAddress;
 
 import com.ghgande.j2mod.modbus.Modbus;
 import com.ghgande.j2mod.modbus.io.ModbusTCPTransaction;
 import com.ghgande.j2mod.modbus.io.ModbusTransaction;
+import com.ghgande.j2mod.modbus.io.ModbusTransport;
 import com.ghgande.j2mod.modbus.msg.ModbusRequest;
-import com.ghgande.j2mod.modbus.msg.ReadInputRegistersRequest;
-import com.ghgande.j2mod.modbus.msg.ReadInputRegistersResponse;
+import com.ghgande.j2mod.modbus.msg.WriteSingleRegisterRequest;
+import com.ghgande.j2mod.modbus.net.ModbusMasterFactory;
 import com.ghgande.j2mod.modbus.net.TCPMasterConnection;
+import com.ghgande.j2mod.modbus.procimg.SimpleRegister;
 
 /**
- * Class that implements a simple commandline tool for reading an analog input.
+ * Class that implements a simple command line tool for writing to an analog
+ * output over a Modbus/TCP connection.
+ * 
+ * <p>
+ * Note that if you write to a remote I/O with a Modbus protocol stack, it will
+ * most likely expect that the communication is <i>kept alive</i> after the
+ * first write message.
+ * 
+ * <p>
+ * This can be achieved either by sending any kind of message, or by repeating
+ * the write message within a given period of time.
+ * 
+ * <p>
+ * If the time period is exceeded, then the device might react by turning off
+ * all signals of the I/O modules. After this timeout, the device might require
+ * a reset message.
  * 
  * @author Dieter Wimberger
  * @version 1.2rc1 (09/11/2004)
+ * 
+ * @author jfhaugh
+ * @version @version@ (@date@)
  */
-public class AITest {
+public class WriteHoldingRegisterTest {
+
+	private static void printUsage() {
+		System.out.println("java com.ghgande.j2mod.modbus.cmd.WriteHoldingRegisterTest"
+				+ " <connection [String]>"
+				+ " <register [int]> <value [int]> {<repeat [int]>}");
+	}
 
 	public static void main(String[] args) {
 
-		InetAddress addr = null;
-		TCPMasterConnection con = null;
 		ModbusRequest req = null;
 		ModbusTransaction trans = null;
+		ModbusTransport transport = null;
 		int ref = 0;
-		int count = 0;
+		int value = 0;
 		int repeat = 1;
-		int port = Modbus.DEFAULT_PORT;
 		int unit = 0;
 
-		try {
+		// 1. Setup parameters
+		if (args.length < 3) {
+			printUsage();
+			System.exit(1);
+		}
 
-			// 1. Setup parameters
-			if (args.length < 3) {
+		try {
+			try {
+				transport = ModbusMasterFactory.createModbusMaster(args[0]);
+				ref = Integer.parseInt(args[1]);
+				value = Integer.parseInt(args[2]);
+
+				if (args.length == 4)
+					repeat = Integer.parseInt(args[3]);
+			} catch (Exception ex) {
+				ex.printStackTrace();
 				printUsage();
 				System.exit(1);
-			} else {
-				try {
-					String serverAddress = args[0];
-					String parts[] = serverAddress.split(":");
-					
-					String address = parts[0];
-					if (parts.length > 1) {
-						port = Integer.parseInt(parts[1]);
-						if (parts.length > 2)
-							unit = Integer.parseInt(parts[2]);
-					}
-					addr = InetAddress.getByName(address);
-					ref = Integer.parseInt(args[1]);
-					count = Integer.parseInt(args[2]);
-					if (args.length == 4) {
-						repeat = Integer.parseInt(args[3]);
-					}
-				} catch (Exception ex) {
-					ex.printStackTrace();
-					printUsage();
-					System.exit(1);
-				}
 			}
 
-			// 2. Open the connection
-			con = new TCPMasterConnection(addr);
-			con.setPort(port);
-			con.connect();
+			req = new WriteSingleRegisterRequest(ref,
+					new SimpleRegister(value));
 
-			if (Modbus.debug)
-				System.out.println("Connected to " + addr.toString() + ":"
-						+ con.getPort());
-
-			// 3. Prepare the request
-			req = new ReadInputRegistersRequest(ref, count);
 			req.setUnitID(unit);
 			if (Modbus.debug)
 				System.out.println("Request: " + req.getHexMessage());
 
-			// 4. Prepare the transaction
-			trans = new ModbusTCPTransaction(con);
+			// 3. Prepare the transaction
+			trans = transport.createTransaction();
 			trans.setRequest(req);
 
-			// 5. Execute the transaction repeat times
-			int k = 0;
-			do {
+			// 4. Execute the transaction repeat times
+
+			for (int count = 0; count < repeat; count++) {
 				trans.execute();
 
-				ReadInputRegistersResponse res = (ReadInputRegistersResponse) trans
-						.getResponse();
 				if (Modbus.debug)
-					System.out.println("Response: " + res.getHexMessage());
-
-				for (int n = 0; n < res.getWordCount(); n++) {
-					System.out.println("Word " + n + "="
-							+ res.getRegisterValue(n));
-				}
-
-				k++;
-			} while (k < repeat);
-
-			// 6. Close the connection
-			con.close();
-
+					System.out.println("Response: "
+							+ trans.getResponse().getHexMessage());
+			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
+		} finally {
+			try {
+				transport.close();
+			} catch (IOException e) {
+				// Do nothing.
+			}
 		}
-	}// main
-
-	private static void printUsage() {
-		System.out
-				.println("java com.ghgande.j2mod.modbus.cmd.AITest <address{:port} [String]> <register [int16]> <wordcount [int16]> {<repeat [int]>}");
-	}// printUsage
-
-}// class AITest
+	}
+}

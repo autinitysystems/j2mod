@@ -69,7 +69,10 @@ public final class ReadMultipleRegistersRequest extends ModbusRequest {
 
 	/**
 	 * Constructs a new <tt>ReadMultipleRegistersRequest</tt> instance with a
-	 * given reference and count of words to be read.
+	 * given reference and count of words to be read.  This message reads
+	 * from holding (r/w) registers.
+	 * 
+	 * @see ReadInputRegistersRequest
 	 * 
 	 * @param ref
 	 *            the reference number of the register to read from.

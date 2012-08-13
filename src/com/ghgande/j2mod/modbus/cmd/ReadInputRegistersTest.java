@@ -64,13 +64,25 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  ***/
-package com.ghgande.j2mod.modbus.procimg;
+package com.ghgande.j2mod.modbus.cmd;
+
+import java.util.Arrays;
+
+import com.ghgande.j2mod.modbus.Modbus;
+import com.ghgande.j2mod.modbus.ModbusException;
+import com.ghgande.j2mod.modbus.io.ModbusTransaction;
+import com.ghgande.j2mod.modbus.io.ModbusTransport;
+import com.ghgande.j2mod.modbus.msg.ExceptionResponse;
+import com.ghgande.j2mod.modbus.msg.ModbusRequest;
+import com.ghgande.j2mod.modbus.msg.ModbusResponse;
+import com.ghgande.j2mod.modbus.msg.ReadInputRegistersRequest;
+import com.ghgande.j2mod.modbus.msg.ReadInputRegistersResponse;
+import com.ghgande.j2mod.modbus.net.ModbusMasterFactory;
+import com.ghgande.j2mod.modbus.procimg.InputRegister;
+import com.ghgande.j2mod.modbus.procimg.Register;
 
 /**
- * Class implementing a simple <tt>Register</tt>.
- * <p>
- * The <tt>setValue()</tt> method is synchronized, which ensures atomic access,
- * but no specific access order.
+ * Class that implements a simple command line tool for reading an analog input.
  * 
  * @author Dieter Wimberger
  * @version 1.2rc1 (09/11/2004)
@@ -78,48 +90,83 @@ package com.ghgande.j2mod.modbus.procimg;
  * @author Julie Haugh
  * @version 0.97 (8/12/12)
  */
-public class SimpleRegister extends SynchronizedAbstractRegister implements
-		Register {
-	
-	public String toString() {
-		if (m_Register == null)
-			return "invalid";
+public class ReadInputRegistersTest {
 
-		return getValue() + "";
+	private static void printUsage() {
+		System.out
+				.println("java com.ghgande.j2mod.modbus.cmd.ReadInputRegistersTest <address{:port} [String]> <register [int16]> <wordcount [int16]> {<repeat [int]>}");
 	}
 
-	/**
-	 * Constructs a new <tt>SimpleRegister</tt> instance.
-	 * 
-	 * @param b1
-	 *            the first (hi) byte of the word.
-	 * @param b2
-	 *            the second (low) byte of the word.
-	 */
-	public SimpleRegister(byte b1, byte b2) {
-		m_Register[0] = b1;
-		m_Register[1] = b2;
-	}
+	public static void main(String[] args) {
+		ModbusTransport transport = null;
+		ModbusRequest req = null;
+		ModbusTransaction trans = null;
+		int ref = 0;
+		int count = 0;
+		int repeat = 1;
+		int unit = 0;
 
-	/**
-	 * Constructs a new <tt>SimpleRegister</tt> instance with the given value.
-	 * 
-	 * @param value
-	 *            the value of this <tt>SimpleRegister</tt> as <tt>int</tt>.
-	 */
-	public SimpleRegister(int value) {
-		setValue(value);
-	}
+		try {
 
-	/**
-	 * Constructs a new <tt>SimpleRegister</tt> instance. It's state will be
-	 * invalid.
-	 * 
-	 * Attempting to access this register will result in an
-	 * IllegalAddressException(). It may be used to create "holes" in a Modbus
-	 * register map.
-	 */
-	public SimpleRegister() {
-		m_Register = null;
+			// 1. Setup parameters
+			if (args.length < 3) {
+				printUsage();
+				System.exit(1);
+			} else {
+				try {
+					transport = ModbusMasterFactory.createModbusMaster(args[0]);
+					ref = Integer.parseInt(args[1]);
+					count = Integer.parseInt(args[2]);
+					if (args.length == 4) {
+						repeat = Integer.parseInt(args[3]);
+					}
+				} catch (Exception ex) {
+					ex.printStackTrace();
+					printUsage();
+					System.exit(1);
+				}
+			}
+
+			req = new ReadInputRegistersRequest(ref, count);
+			req.setUnitID(unit);
+			if (Modbus.debug)
+				System.out.println("Request: " + req.getHexMessage());
+
+			// 4. Prepare the transaction
+			trans = transport.createTransaction();
+			trans.setRequest(req);
+
+			// 5. Execute the transaction repeat times
+			for (int k = 0;k < repeat;k++) {
+				try {
+					trans.execute();
+				} catch (ModbusException x) {
+					System.err.println(x.getMessage());
+					continue;
+				}
+
+				ModbusResponse res = (ReadInputRegistersResponse) trans
+						.getResponse();
+
+				if (Modbus.debug)
+					System.out.println("Response: " + res.getHexMessage());
+
+				if (res instanceof ExceptionResponse) {
+					ExceptionResponse exception = (ExceptionResponse) res;
+					System.out.println(exception);
+					continue;
+				}
+
+				ReadInputRegistersResponse data = (ReadInputRegistersResponse) res;
+				InputRegister[] values = data.getRegisters();
+				System.out.println("Data: " + Arrays.toString(values));
+			}
+
+			// 6. Close the connection
+			transport.close();
+
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
 	}
 }

@@ -181,13 +181,17 @@ public final class MaskWriteRegisterRequest extends ModbusRequest {
 			 * applied to set them.
 			 */
 			int value = register.getValue();
+System.err.println("original value = " + value);
 			
+System.err.println("and = " + m_AndMask + ", or = " + m_OrMask);
 			value = (value & m_AndMask) | m_OrMask;
+System.err.println("new value = " + value);
 			
 			/*
 			 * Store the modified value back where it came from.
 			 */
 			register.setValue(value);
+System.err.println("Done.");
 		} catch (IllegalAddressException iaex) {
 			return createExceptionResponse(Modbus.ILLEGAL_ADDRESS_EXCEPTION);
 		}
@@ -232,9 +236,27 @@ public final class MaskWriteRegisterRequest extends ModbusRequest {
 
 		return results;
 	}
+	
+	/**
+	 * Constructs a new <tt>Mask Write Register</tt> request.
+	 * 
+	 * @param ref
+	 * @param andMask
+	 * @param orMask
+	 */
+	public MaskWriteRegisterRequest(int ref, int andMask, int orMask) {
+		super();
+		
+		setFunctionCode(Modbus.MASK_WRITE_REGISTER);
+		setReference(ref);
+		setAndMask(andMask);
+		setOrMask(orMask);
+		
+		setDataLength(6);
+	}
 
 	/**
-	 * Constructs a new <tt>Report Slave ID request</tt>
+	 * Constructs a new <tt>Mask Write Register</tt> request.
 	 * instance.
 	 */
 	public MaskWriteRegisterRequest() {
