@@ -34,22 +34,17 @@
 package com.ghgande.j2mod.modbus.cmd;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.util.Arrays;
 
 import com.ghgande.j2mod.modbus.Modbus;
-import com.ghgande.j2mod.modbus.io.ModbusTCPTransaction;
 import com.ghgande.j2mod.modbus.io.ModbusTransaction;
 import com.ghgande.j2mod.modbus.io.ModbusTransport;
 import com.ghgande.j2mod.modbus.msg.ModbusRequest;
 import com.ghgande.j2mod.modbus.msg.ModbusResponse;
 import com.ghgande.j2mod.modbus.msg.ReadMultipleRegistersRequest;
 import com.ghgande.j2mod.modbus.msg.ReadMultipleRegistersResponse;
-import com.ghgande.j2mod.modbus.msg.WriteSingleRegisterRequest;
 import com.ghgande.j2mod.modbus.net.ModbusMasterFactory;
-import com.ghgande.j2mod.modbus.net.TCPMasterConnection;
 import com.ghgande.j2mod.modbus.procimg.Register;
-import com.ghgande.j2mod.modbus.procimg.SimpleRegister;
 
 /**
  * Class that implements a simple command line tool for writing to an analog
@@ -72,7 +67,7 @@ import com.ghgande.j2mod.modbus.procimg.SimpleRegister;
  * @author Dieter Wimberger
  * @version 1.2rc1 (09/11/2004)
  * 
- * @author jfhaugh
+ * @author Julie Haugh
  * @version @version@ (@date@)
  */
 public class ReadHoldingRegistersTest {

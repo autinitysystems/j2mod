@@ -33,14 +33,12 @@
  ***/
 package com.ghgande.j2mod.modbus.cmd;
 
-import java.net.InetAddress;
-
 import com.ghgande.j2mod.modbus.Modbus;
-import com.ghgande.j2mod.modbus.io.ModbusTCPTransaction;
 import com.ghgande.j2mod.modbus.io.ModbusTransaction;
-import com.ghgande.j2mod.modbus.msg.ModbusRequest;
+import com.ghgande.j2mod.modbus.io.ModbusTransport;
 import com.ghgande.j2mod.modbus.msg.WriteCoilRequest;
-import com.ghgande.j2mod.modbus.net.TCPMasterConnection;
+import com.ghgande.j2mod.modbus.msg.WriteCoilResponse;
+import com.ghgande.j2mod.modbus.net.ModbusMasterFactory;
 
 /**
  * <p>
@@ -64,64 +62,46 @@ import com.ghgande.j2mod.modbus.net.TCPMasterConnection;
  * @author Dieter Wimberger
  * @version 1.2rc1 (09/11/2004)
  */
-public class DOTest {
+public class WriteCoilTest {
 
 	private static void printUsage() {
 		System.out
-				.println("java com.ghgande.j2mod.modbus.cmd.DOTest"
-						+ " <address{:<port>} [String]>"
-						+ " <register [int16]> <state [boolean]>"
+				.println("java com.ghgande.j2mod.modbus.cmd.WriteCoilTest"
+						+ " <connection [String]>"
+						+ " <unit [int8]>"
+						+ " <coil [int16]>"
+						+ " <state [boolean]>"
 						+ " {<repeat [int]>}");
 	}
 
 	public static void main(String[] args) {
-		InetAddress addr = null;
-		TCPMasterConnection con = null;
-		ModbusRequest req = null;
+		WriteCoilRequest req = null;
+		ModbusTransport transport = null;
 		ModbusTransaction trans = null;
 		int ref = 0;
 		boolean value = false;
 		int repeat = 1;
-		int port = Modbus.DEFAULT_PORT;
 		int unit = 0;
 
 		// 1. Setup the parameters
-		if (args.length < 3) {
+		if (args.length < 4) {
 			printUsage();
 			System.exit(1);
 		}
 		try {
 			try {
-				String serverAddress = args[0];
-				String parts[] = serverAddress.split(":");
-
-				String address = parts[0];
-				if (parts.length > 1) {
-					port = Integer.parseInt(parts[1]);
-					if (parts.length > 2)
-						unit = Integer.parseInt(parts[2]);
-				}
-				addr = InetAddress.getByName(address);
-
-				ref = Integer.parseInt(args[1]);
-				value = "true".equals(args[2]);
-				if (args.length == 4) {
-					repeat = Integer.parseInt(args[3]);
+				transport = ModbusMasterFactory.createModbusMaster(args[0]);
+				unit = Integer.parseInt(args[1]);
+				ref = Integer.parseInt(args[2]);
+				value = "true".equals(args[3]);
+				if (args.length == 5) {
+					repeat = Integer.parseInt(args[4]);
 				}
 			} catch (Exception ex) {
 				ex.printStackTrace();
 				printUsage();
 				System.exit(1);
 			}
-
-			// 2. Open the connection
-			con = new TCPMasterConnection(addr);
-			con.setPort(port);
-			con.connect();
-
-			if (Modbus.debug)
-				System.out.println("Connected to " + addr.toString() + ":"
-						+ con.getPort());
 
 			// 3. Prepare the request
 			req = new WriteCoilRequest(ref, value);
@@ -130,7 +110,7 @@ public class DOTest {
 				System.out.println("Request: " + req.getHexMessage());
 
 			// 4. Prepare the transaction
-			trans = new ModbusTCPTransaction(con);
+			trans = transport.createTransaction();
 			trans.setRequest(req);
 
 			// 5. Execute the transaction repeat times
@@ -140,10 +120,13 @@ public class DOTest {
 				if (Modbus.debug)
 					System.out.println("Response: "
 							+ trans.getResponse().getHexMessage());
+				
+				WriteCoilResponse data = (WriteCoilResponse) trans.getResponse();
+				System.out.println("Coil = " + data.getCoil());
 			}
 
 			// 6. Close the connection
-			con.close();
+			transport.close();
 
 		} catch (Exception ex) {
 			ex.printStackTrace();

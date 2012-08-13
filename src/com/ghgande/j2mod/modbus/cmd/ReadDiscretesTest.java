@@ -31,62 +31,86 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  ***/
+/***
+ * Java Modbus Library (j2mod)
+ * Copyright 2012, Julianne Frances Haugh
+ * d/b/a greenHouse Gas and Electric
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * Neither the name of the author nor the names of its contributors
+ * may be used to endorse or promote products derived from this software
+ * without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS ``AS
+ * IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ ***/
 package com.ghgande.j2mod.modbus.cmd;
-
-import java.net.InetAddress;
 
 import com.ghgande.j2mod.modbus.Modbus;
 import com.ghgande.j2mod.modbus.io.ModbusTCPTransaction;
+import com.ghgande.j2mod.modbus.io.ModbusTransaction;
+import com.ghgande.j2mod.modbus.io.ModbusTransport;
 import com.ghgande.j2mod.modbus.msg.ReadInputDiscretesRequest;
 import com.ghgande.j2mod.modbus.msg.ReadInputDiscretesResponse;
-import com.ghgande.j2mod.modbus.net.TCPMasterConnection;
+import com.ghgande.j2mod.modbus.net.ModbusMasterFactory;
 
 /**
- * Class that implements a simple command line tool for reading a digital
- * input.
+ * Class that implements a simple command line tool for reading a digital input.
  * 
  * @author Dieter Wimberger
  * @version 1.2rc1 (09/11/2004)
  */
-public class DITest {
+public class ReadDiscretesTest {
+
+	private static void printUsage() {
+		System.out.println(
+				"java com.ghgande.j2mod.modbus.cmd.ReadDiscretesTest <connection [String]> <unit [int8]> <register [int16]> <bitcount [int16]> {<repeat [int]>}");
+	}
 
 	public static void main(String[] args) {
-
-		TCPMasterConnection con = null;
-		ModbusTCPTransaction trans = null;
 		ReadInputDiscretesRequest req = null;
 		ReadInputDiscretesResponse res = null;
-
-		InetAddress addr = null;
+		ModbusTransport transport = null;
+		ModbusTransaction trans = null;
 		int ref = 0;
 		int count = 0;
 		int repeat = 1;
-		int port = Modbus.DEFAULT_PORT;
-		int	unit = 0;
+		int unit = 0;
 
 		try {
 
 			// 1. Setup the parameters
-			if (args.length < 3) {
+			if (args.length < 4 || args.length > 5) {
 				printUsage();
 				System.exit(1);
 			} else {
 				try {
-					String serverAddress = args[0];
-					String parts[] = serverAddress.split(":");
-					
-					String address = parts[0];
-					if (parts.length > 1) {
-						port = Integer.parseInt(parts[1]);
-						if (parts.length > 2)
-							unit = Integer.parseInt(parts[2]);
-					}
-					addr = InetAddress.getByName(address);
-					
-					ref = Integer.parseInt(args[1]);
-					count = Integer.parseInt(args[2]);
-					if (args.length == 4) {
-						repeat = Integer.parseInt(args[3]);
+					transport = ModbusMasterFactory.createModbusMaster(args[0]);
+					unit = Integer.parseInt(args[1]);
+					ref = Integer.parseInt(args[2]);
+					count = Integer.parseInt(args[3]);
+					if (args.length == 5) {
+						repeat = Integer.parseInt(args[4]);
 					}
 				} catch (Exception ex) {
 					ex.printStackTrace();
@@ -95,25 +119,17 @@ public class DITest {
 				}
 			}
 
-			// 2. Open the connection
-			con = new TCPMasterConnection(addr);
-			con.setPort(port);
-			con.connect();
-
-			if (Modbus.debug)
-				System.out.println("Connected to " + addr.toString() + ":"
-						+ con.getPort());
-
-			// 3. Prepare the request
 			req = new ReadInputDiscretesRequest(ref, count);
 			req.setUnitID(unit);
 			if (Modbus.debug)
 				System.out.println("Request: " + req.getHexMessage());
 
 			// 4. Prepare the transaction
-			trans = new ModbusTCPTransaction(con);
+			trans = transport.createTransaction();
 			trans.setRequest(req);
-			trans.setReconnecting(false);
+
+			if (trans instanceof ModbusTCPTransaction)
+				((ModbusTCPTransaction) trans).setReconnecting(true);
 
 			// 5. Execute the transaction repeat times
 			int k = 0;
@@ -124,22 +140,18 @@ public class DITest {
 
 				if (Modbus.debug)
 					System.out.println("Response: " + res.getHexMessage());
-				System.out.println("Digital Inputs Status="
+
+				System.out.println("Input Discretes Status="
 						+ res.getDiscretes().toString());
-				
+
 				k++;
 			} while (k < repeat);
 
 			// 6. Close the connection
-			con.close();
+			transport.close();
 
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
-	}
-
-	private static void printUsage() {
-		System.out.println(
-				"java com.ghgande.j2mod.modbus.cmd.DITest <address{:<port>} [String]> <register [int16]> <bitcount [int16]> {<repeat [int]>}");
 	}
 }
