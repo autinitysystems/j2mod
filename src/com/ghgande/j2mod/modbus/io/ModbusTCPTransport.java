@@ -48,6 +48,8 @@ import com.ghgande.j2mod.modbus.ModbusIOException;
 import com.ghgande.j2mod.modbus.msg.ModbusMessage;
 import com.ghgande.j2mod.modbus.msg.ModbusRequest;
 import com.ghgande.j2mod.modbus.msg.ModbusResponse;
+import com.ghgande.j2mod.modbus.net.TCPMasterConnection;
+import com.ghgande.j2mod.modbus.net.TCPSlaveConnection;
 import com.ghgande.j2mod.modbus.util.ModbusUtil;
 
 /**
@@ -68,6 +70,8 @@ public class ModbusTCPTransport implements ModbusTransport {
 	private BytesOutputStream m_ByteOut; // write frames
 	private int m_Timeout = Modbus.DEFAULT_TIMEOUT;
 	private Socket m_Socket = null;
+	private	TCPMasterConnection m_Master = null;
+	private	TCPSlaveConnection m_Slave = null;
 	private boolean headless = false; // Some TCP implementations are.
 
 	/**
@@ -112,6 +116,15 @@ public class ModbusTCPTransport implements ModbusTransport {
 		m_Output.close();
 		m_Socket.close();
 	}// close
+
+	  public ModbusTransaction createTransaction() {
+		  if (m_Master == null) {
+			  m_Master = new TCPMasterConnection(m_Socket.getInetAddress());
+			  m_Master.setModbusTransport(this);
+		  }
+		  ModbusTCPTransaction trans = new ModbusTCPTransaction(m_Master);
+		  return trans;
+	  }
 
 	public void writeMessage(ModbusMessage msg) throws ModbusIOException {
 		try {

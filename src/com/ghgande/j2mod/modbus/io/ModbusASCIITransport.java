@@ -76,6 +76,10 @@ public class ModbusASCIITransport
     m_InputStream.close();
     m_OutputStream.close();
   }//close
+  
+  public ModbusTransaction createTransaction() {
+	  return new ModbusSerialTransaction();
+  }
 
   public void writeMessage(ModbusMessage msg)
       throws ModbusIOException {

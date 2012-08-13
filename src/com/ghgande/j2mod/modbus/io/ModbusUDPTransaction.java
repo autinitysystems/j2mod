@@ -166,6 +166,7 @@ public class ModbusUDPTransaction
         m_Terminal.activate();
         m_IO = m_Terminal.getModbusTransport();
       } catch (Exception ex) {
+ex.printStackTrace();
         throw new ModbusIOException("Activation failed.");
 
       }

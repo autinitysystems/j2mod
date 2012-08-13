@@ -93,6 +93,7 @@ public class ModbusTCPTransaction implements ModbusTransaction {
 	 */
 	public ModbusTCPTransaction(TCPMasterConnection con) {
 		setConnection(con);
+		m_IO = con.getModbusTransport();
 	}
 
 	/**

@@ -60,19 +60,6 @@ public class ModbusUDPTransport
   private BytesOutputStream m_ByteOut;
   private BytesInputStream m_ByteIn;
 
-  /**
-   * Constructs a new <tt>ModbusTransport</tt> instance,
-   * for a given <tt>UDPTerminal</tt>.
-   * <p>
-   * @param terminal the <tt>UDPTerminal</tt> used for message transport.
-   */
-  public ModbusUDPTransport(UDPTerminal terminal) {
-    m_Terminal = terminal;
-    m_ByteOut = new BytesOutputStream(Modbus.MAX_MESSAGE_LENGTH);
-    m_ByteIn = new BytesInputStream(Modbus.MAX_MESSAGE_LENGTH);
-  }//constructor
-
-
   public void close()
       throws IOException {
     //?
@@ -80,6 +67,13 @@ public class ModbusUDPTransport
 
   public boolean getDebug() {
 	  return "true".equals(System.getProperty("com.ghgande.j2mod.modbus.debug"));
+  }
+
+  public ModbusTransaction createTransaction() {
+	  ModbusUDPTransaction trans = new ModbusUDPTransaction();
+	  trans.setTerminal(m_Terminal);
+	  
+	  return trans;
   }
 
   public void writeMessage(ModbusMessage msg)
@@ -179,5 +173,18 @@ public class ModbusUDPTransport
       throw new ModbusIOException("I/O exception - failed to read.");
     }
   }//readResponse
+
+
+/**
+   * Constructs a new <tt>ModbusTransport</tt> instance,
+   * for a given <tt>UDPTerminal</tt>.
+   * <p>
+   * @param terminal the <tt>UDPTerminal</tt> used for message transport.
+   */
+  public ModbusUDPTransport(UDPTerminal terminal) {
+    m_Terminal = terminal;
+    m_ByteOut = new BytesOutputStream(Modbus.MAX_MESSAGE_LENGTH);
+    m_ByteIn = new BytesInputStream(Modbus.MAX_MESSAGE_LENGTH);
+  }//constructor
 
 }//class ModbusUDPTransport

@@ -58,6 +58,13 @@ public interface ModbusTransport {
    *         cannot be closed properly.
    */
   public void close() throws IOException;
+  
+  /**
+   * Creates a Modbus transaction for the underlying transport.
+   * 
+   * @return the new transaction
+   */
+  public ModbusTransaction createTransaction();
 
   /**
    * Writes a <tt<ModbusMessage</tt> to the

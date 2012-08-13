@@ -67,6 +67,10 @@ public class ModbusRTUTransport extends ModbusSerialTransport {
 	private boolean osIsKnown = false;
 	private boolean osIsWindows = false;
 
+	  public ModbusTransaction createTransaction() {
+		  return new ModbusSerialTransaction();
+	  }
+
 	public void writeMessage(ModbusMessage msg) throws ModbusIOException {
 		try {
 			int len;
