@@ -206,22 +206,6 @@ public interface ProcessImage {
 	 * @return the number of registers as <tt>int</tt>.
 	 */
 	public int getRegisterCount();
-	
-	/**
-	 * Returns a range of <tt>File</tt> instances.
-	 * 
-	 * @param offset
-	 *            the start offset.
-	 * @param count
-	 *            the number of <tt>File</tt> instances from the offset.
-	 * 
-	 * @return an array of <tt>File</tt> instances.
-	 * 
-	 * @throws IllegalAddressException
-	 *             if the range from offset to offset+count is non existent.
-	 */
-	public File[] getFileRange(int offset, int count)
-			throws IllegalAddressException;
 
 	/**
 	 * Returns the <tt>File</tt> instance at the given reference.
@@ -236,6 +220,19 @@ public interface ProcessImage {
 	 *             if the reference is invalid.
 	 */
 	public File getFile(int ref) throws IllegalAddressException;
+
+	/**
+	 * Returns the <tt>File</tt> instance having the specified file number.
+	 * 
+	 * @param ref
+	 *            The file number for the File object to be returned.
+	 * 
+	 * @return the <tt>File</tt> instance having the given number.
+	 * 
+	 * @throws IllegalAddressException
+	 *             if a File with the given number does not exist.
+	 */
+	public File getFileByNumber(int ref) throws IllegalAddressException;
 
 	/**
 	 * Returns the number of <tt>File</tt> instances in this

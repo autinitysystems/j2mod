@@ -233,7 +233,7 @@ public final class WriteFileRecordRequest extends ModbusRequest {
 						recordRequest.getFileNumber() >= procimg.getFileCount())
 					return createExceptionResponse(Modbus.ILLEGAL_ADDRESS_EXCEPTION);
 					
-				File file = procimg.getFile(recordRequest.getFileNumber());
+				File file = procimg.getFileByNumber(recordRequest.getFileNumber());
 				
 				if (recordRequest.getRecordNumber() < 0 ||
 						recordRequest.getRecordNumber() >= file.getRecordCount())

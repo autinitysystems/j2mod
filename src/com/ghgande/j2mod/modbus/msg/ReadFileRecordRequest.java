@@ -73,7 +73,6 @@ import java.io.IOException;
 import com.ghgande.j2mod.modbus.Modbus;
 import com.ghgande.j2mod.modbus.ModbusCoupler;
 import com.ghgande.j2mod.modbus.msg.ReadFileRecordResponse.RecordResponse;
-import com.ghgande.j2mod.modbus.procimg.DigitalIn;
 import com.ghgande.j2mod.modbus.procimg.File;
 import com.ghgande.j2mod.modbus.procimg.IllegalAddressException;
 import com.ghgande.j2mod.modbus.procimg.ProcessImage;
@@ -84,9 +83,6 @@ import com.ghgande.j2mod.modbus.procimg.Register;
  * Class implementing a <tt>Read File Record</tt> request.
  * 
  * @author Julie Haugh (jfh@ghgande.com)
- * @version jamod-1.2rc1-ghpc
- * 
- * @author jfhaugh (jfh@ghgande.com)
  * @version @version@ (@date@)
  */
 public final class ReadFileRecordRequest extends ModbusRequest {
@@ -141,59 +137,58 @@ public final class ReadFileRecordRequest extends ModbusRequest {
 
 	private int m_ByteCount;
 	private RecordRequest[] m_Records;
-	
+
 	/**
-	 * getRequestSize -- return the total request size.  This is useful
-	 * for determining if a new record can be added.
+	 * getRequestSize -- return the total request size. This is useful for
+	 * determining if a new record can be added.
 	 * 
 	 * @returns size in bytes of response.
 	 */
 	public int getRequestSize() {
 		if (m_Records == null)
 			return 1;
-		
+
 		int size = 1;
-		for (int i = 0;i < m_Records.length;i++)
+		for (int i = 0; i < m_Records.length; i++)
 			size += m_Records[i].getRequestSize();
-		
+
 		return size;
 	}
-	
+
 	/**
-	 * getRequestCount -- return the number of record requests in this
-	 * message.
+	 * getRequestCount -- return the number of record requests in this message.
 	 */
 	public int getRequestCount() {
 		if (m_Records == null)
 			return 0;
-		
+
 		return m_Records.length;
 	}
-	
+
 	/**
 	 * getRecord -- return the record request indicated by the reference
 	 */
 	public RecordRequest getRecord(int index) {
 		return m_Records[index];
 	}
-	
+
 	/**
 	 * addRequest -- add a new record request.
 	 */
 	public void addRequest(RecordRequest request) {
 		if (request.getRequestSize() + getRequestSize() > 248)
 			throw new IllegalArgumentException();
-		
+
 		if (m_Records == null)
 			m_Records = new RecordRequest[1];
 		else {
 			RecordRequest old[] = m_Records;
 			m_Records = new RecordRequest[old.length + 1];
-			
+
 			System.arraycopy(old, 0, m_Records, 0, old.length);
 		}
 		m_Records[m_Records.length - 1] = request;
-		
+
 		setDataLength(getRequestSize());
 	}
 
@@ -235,37 +230,41 @@ public final class ReadFileRecordRequest extends ModbusRequest {
 		 * Get the process image.
 		 */
 		ProcessImage procimg = ModbusCoupler.getReference().getProcessImage();
-		
+
 		/*
 		 * There is a list of requests to be resolved.
 		 */
 		try {
-			for (int i = 0;i < getRequestCount();i++) {
+			for (int i = 0; i < getRequestCount(); i++) {
 				RecordRequest recordRequest = getRecord(i);
-				if (recordRequest.getFileNumber() < 0 ||
-						recordRequest.getFileNumber() >= procimg.getFileCount())
+				if (recordRequest.getFileNumber() < 0
+						|| recordRequest.getFileNumber() >= procimg
+								.getFileCount())
 					return createExceptionResponse(Modbus.ILLEGAL_ADDRESS_EXCEPTION);
-					
-				File file = procimg.getFile(recordRequest.getFileNumber());
-				
-				if (recordRequest.getRecordNumber() < 0 ||
-						recordRequest.getRecordNumber() >= file.getRecordCount())
+
+				File file = procimg.getFileByNumber(recordRequest
+						.getFileNumber());
+
+				if (recordRequest.getRecordNumber() < 0
+						|| recordRequest.getRecordNumber() >= file
+								.getRecordCount())
 					return createExceptionResponse(Modbus.ILLEGAL_ADDRESS_EXCEPTION);
-				
+
 				Record record = file.getRecord(recordRequest.getRecordNumber());
 				int registers = recordRequest.getWordCount();
 				if (record == null && registers != 0)
 					return createExceptionResponse(Modbus.ILLEGAL_ADDRESS_EXCEPTION);
-									
+
 				short data[] = new short[registers];
-				for (int j = 0;j < registers;j++) {
+				for (int j = 0; j < registers; j++) {
 					Register register = record.getRegister(j);
 					if (register == null)
-						return createExceptionResponse(Modbus.ILLEGAL_ADDRESS_EXCEPTION);						
-						
+						return createExceptionResponse(Modbus.ILLEGAL_ADDRESS_EXCEPTION);
+
 					data[j] = register.toShort();
 				}
-				RecordResponse recordResponse = response.new RecordResponse(data);
+				RecordResponse recordResponse = response.new RecordResponse(
+						data);
 				response.addResponse(recordResponse);
 			}
 		} catch (IllegalAddressException e) {
@@ -313,7 +312,7 @@ public final class ReadFileRecordRequest extends ModbusRequest {
 
 		int offset = 0;
 		request[offset++] = (byte) (request.length - 1);
-		
+
 		for (int i = 0; i < m_Records.length; i++) {
 			m_Records[i].getRequest(request, offset);
 			offset += 7;

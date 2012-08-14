@@ -74,14 +74,13 @@ import java.util.Vector;
  * 
  * <p>
  * The image has a simple linear address space for, analog, digital and file
- * objects. There are no "holes" between objects in this model.  File objects
+ * objects. There are no "holes" between objects in this model. File objects
  * that are created with file numbers will have the number ignored.
  * 
  * @author Dieter Wimberger
  * @version 1.2rc1 (09/11/2004)
  * 
- * @author Julie
- *	Added support for files of records.
+ * @author Julie Added support for files of records.
  */
 public class SimpleProcessImage implements ProcessImageImplementation {
 
@@ -91,6 +90,7 @@ public class SimpleProcessImage implements ProcessImageImplementation {
 	protected Vector<InputRegister> m_InputRegisters;
 	protected Vector<Register> m_Registers;
 	protected Vector<File> m_Files;
+	protected Vector<FIFO> m_FIFOs;
 	protected boolean m_Locked = false;
 	protected int m_Unit = 0;
 
@@ -128,21 +128,21 @@ public class SimpleProcessImage implements ProcessImageImplementation {
 	}
 
 	/**
-	 * setLocked -- lock or unlock the process image.  It is an error
-	 * (false return value) to attempt to lock the process image
-	 * when it is already locked.
+	 * setLocked -- lock or unlock the process image. It is an error (false
+	 * return value) to attempt to lock the process image when it is already
+	 * locked.
 	 * 
-	 * <p>Compatability Note: jamod did not enforce this restriction,
-	 * so it is being handled in a way which is backwards compatible.
-	 * If you wish to determine if you acquired the lock, check the
-	 * return value.  If your code is still based on the jamod
-	 * paradigm, you will ignore the return value and your code will
-	 * function as before.
+	 * <p>
+	 * Compatability Note: jamod did not enforce this restriction, so it is
+	 * being handled in a way which is backwards compatible. If you wish to
+	 * determine if you acquired the lock, check the return value. If your code
+	 * is still based on the jamod paradigm, you will ignore the return value
+	 * and your code will function as before.
 	 */
 	public synchronized boolean setLocked(boolean locked) {
 		if (m_Locked && locked)
 			return false;
-		
+
 		m_Locked = locked;
 		return true;
 	}
@@ -341,17 +341,17 @@ public class SimpleProcessImage implements ProcessImageImplementation {
 			return iregs;
 		}
 	}
-	
+
 	public void addFile(File newFile) {
-		if (! isLocked())
+		if (!isLocked())
 			m_Files.add(newFile);
 	}
-	
+
 	public void removeFile(File oldFile) {
-		if (! isLocked())
+		if (!isLocked())
 			m_Files.removeElement(oldFile);
 	}
-	
+
 	public void setFile(int fileNumber, File file) {
 		if (!isLocked()) {
 			try {
@@ -361,28 +361,30 @@ public class SimpleProcessImage implements ProcessImageImplementation {
 			}
 		}
 	}
-	
+
 	public File getFile(int fileNumber) {
 		try {
 			return m_Files.elementAt(fileNumber);
 		} catch (IndexOutOfBoundsException ex) {
 			throw new IllegalAddressException();
-		}		
+		}
 	}
-	
+
 	public int getFileCount() {
 		return m_Files.size();
 	}
-	
-	public File[] getFileRange(int ref, int count) {
-		if (ref < 0 || ref + count > m_Files.size()) {
+
+	public File getFileByNumber(int ref) {
+		if (ref < 0 || ref >= 10000 || m_Files == null)
 			throw new IllegalAddressException();
-		} else {
-			File[] files = new File[count];
-			for (int i = 0; i < files.length; i++) {
-				files[i] = getFile(ref + i);
+
+		synchronized (m_Files) {
+			for (File file : m_Files) {
+				if (file.getFileNumber() == ref)
+					return file;
 			}
-			return files;
 		}
+		
+		throw new IllegalAddressException();
 	}
 }
