@@ -244,4 +244,42 @@ public interface ProcessImage {
 	 * @return the number of registers as <tt>int</tt>.
 	 */
 	public int getFileCount();
+	
+	/**
+	 * Returns the <tt>FIFO</tt> instance in the list of all FIFO objects
+	 * in this ProcessImage.
+	 * 
+	 * @param ref
+	 *            the reference.
+	 * 
+	 * @return the <tt>File</tt> instance at the given address.
+	 * 
+	 * @throws IllegalAddressException
+	 *             if the reference is invalid.
+	 */
+	public FIFO getFIFO(int ref) throws IllegalAddressException;
+
+	/**
+	 * Returns the <tt>FIFO</tt> instance having the specified base address.
+	 * 
+	 * @param ref
+	 *            The address for the FIFO object to be returned.
+	 * 
+	 * @return the <tt>FIFO</tt> instance having the given base address
+	 * 
+	 * @throws IllegalAddressException
+	 *             if a File with the given number does not exist.
+	 */
+	public FIFO getFIFOByAddress(int ref) throws IllegalAddressException;
+
+	/**
+	 * Returns the number of <tt>File</tt> instances in this
+	 * <tt>ProcessImage</tt>.
+	 * 
+	 * <p>
+	 * This is not the same as the value of the highest addressable register.
+	 * 
+	 * @return the number of registers as <tt>int</tt>.
+	 */
+	public int getFIFOCount();
 }
