@@ -194,6 +194,36 @@ public interface ProcessImageImplementation extends ProcessImage {
 	public void removeFile(File reg);
 
 	/**
+	 * Sets a new <tt>FIFO</tt> instance at the given reference.
+	 * 
+	 * @param ref
+	 *            the reference as <tt>int</tt>.
+	 * @param reg
+	 *            the new <tt>FIFO</tt> instance to be set.
+	 * 
+	 * @throws IllegalAddressException
+	 *             if the reference is invalid.
+	 */
+	public void setFIFO(int ref, FIFO reg)
+			throws IllegalAddressException;
+
+	/**
+	 * Adds a new <tt>FIFO</tt> instance.
+	 * 
+	 * @param reg
+	 *            the <tt>FIFO</tt> instance to be added.
+	 */
+	public void addFIFO(FIFO reg);
+
+	/**
+	 * Removes a given <tt>FIFO</tt> instance.
+	 * 
+	 * @param reg
+	 *            the <tt>FIFO</tt> instance to be removed.
+	 */
+	public void removeFIFO(FIFO reg);
+
+	/**
 	 * Defines the set state (i.e. <b>true</b>) of a digital input or output.
 	 */
 	public static final byte DIG_TRUE = 1;
