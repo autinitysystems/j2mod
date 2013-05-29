@@ -199,20 +199,34 @@ public class ModbusTCPTransaction implements ModbusTransaction {
 		 * is read immediately after being written, with no flushing of buffers.
 		 */
 		int retryCounter = 0;
-		while (retryCounter < (m_Retries > 0 ? m_Retries:1)) {
+		int retryLimit = (m_Retries > 0 ? m_Retries:1);
+		
+		while (retryCounter < retryLimit) {
 			try {
 				synchronized (m_IO) {
+					if (Modbus.debug)
+						System.err.println("request transaction ID = " + m_Request.getTransactionID());
+					
 					m_IO.writeMessage(m_Request);
 					m_Response = null;
 					do {
 						m_Response = m_IO.readResponse();
+						if (Modbus.debug) {
+							System.err.println("response transaction ID = " + m_Response.getTransactionID());
+						
+							if (m_Response.getTransactionID() != m_Request.getTransactionID()) {
+								System.err.println("expected " + m_Request.getTransactionID() +
+										", got " + m_Response.getTransactionID());
+							}
+						}
 					} while (m_Response != null
-							&& (m_Request.getTransactionID() != 0 && m_Request
-									.getTransactionID() != m_Response
-									.getTransactionID())
-							&& ++retryCounter <= m_Retries);
+							&& (! isCheckingValidity() ||
+									(m_Request.getTransactionID() != 0 &&
+								m_Request.getTransactionID() !=
+									m_Response.getTransactionID()))
+							&& ++retryCounter < retryLimit);
 
-					if (retryCounter >= m_Retries) {
+					if (retryCounter >= retryLimit) {
 						throw new ModbusIOException(
 								"Executing transaction failed (tried "
 										+ m_Retries + " times)");
@@ -225,7 +239,17 @@ public class ModbusTCPTransaction implements ModbusTransaction {
 					break;
 				}
 			} catch (ModbusIOException ex) {
-				if (retryCounter == m_Retries) {
+				if (! m_Connection.isConnected()) {
+					try {
+						m_Connection.connect();
+					} catch (Exception e) {
+						/*
+						 * Nope, fail this transaction.
+						 */
+						throw new ModbusIOException("Connection lost.");
+					}
+				}
+				if (retryCounter >= retryLimit) {
 					throw new ModbusIOException(
 							"Executing transaction failed (tried " + m_Retries
 									+ " times)");
@@ -252,7 +276,7 @@ public class ModbusTCPTransaction implements ModbusTransaction {
 		/*
 		 * See if packets require validity checking.
 		 */
-		if (isCheckingValidity())
+		if (isCheckingValidity() && m_Request != null && m_Response != null)
 			checkValidity();
 
 		incrementTransactionID();
