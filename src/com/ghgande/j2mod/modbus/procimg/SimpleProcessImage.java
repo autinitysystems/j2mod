@@ -387,4 +387,49 @@ public class SimpleProcessImage implements ProcessImageImplementation {
 		
 		throw new IllegalAddressException();
 	}
+	
+	public void addFIFO(FIFO fifo) {
+		if (! isLocked())
+			m_FIFOs.add(fifo);
+	}
+	
+	public void removeFIFO(FIFO oldFIFO) {
+		if (!isLocked())
+			m_FIFOs.removeElement(oldFIFO);
+	}
+	
+	public void setFIFO(int fifoNumber, FIFO fifo) {
+		if (!isLocked()) {
+			try {
+				m_FIFOs.setElementAt(fifo, fifoNumber);
+			} catch (IndexOutOfBoundsException ex) {
+				throw new IllegalAddressException();
+			}
+		}
+	}
+	
+	public FIFO getFIFO(int fifoNumber) {
+		try {
+			return m_FIFOs.elementAt(fifoNumber);
+		} catch (IndexOutOfBoundsException ex) {
+			throw new IllegalAddressException();
+		}
+	}
+	
+	public int getFIFOCount() {
+		if (m_FIFOs == null)
+			return 0;
+		
+		return m_FIFOs.size();
+	}
+	
+	public FIFO getFIFOByAddress(int ref) {
+		for (FIFO fifo : m_FIFOs) {
+			if (fifo.getAddress() == ref)
+				return fifo;
+		}
+		
+		return null;
+	}
+
 }
