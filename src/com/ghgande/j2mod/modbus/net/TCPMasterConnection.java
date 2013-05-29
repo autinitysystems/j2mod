@@ -59,17 +59,27 @@ public class TCPMasterConnection {
 
 	// private int m_Retries = Modbus.DEFAULT_RETRIES;
 	private ModbusTCPTransport m_ModbusTransport;
+	
+	/**
+	 * m_useUrgentData - sent a byte of urgent data when testing the TCP
+	 * connection.
+	 */
+	private boolean m_useUrgentData = false;
 
 	/**
-	 * Constructs a <tt>TCPMasterConnection</tt> instance with a given
-	 * destination address.
+	 * Prepares the associated <tt>ModbusTransport</tt> of this
+	 * <tt>TCPMasterConnection</tt> for use.
 	 * 
-	 * @param adr
-	 *            the destination <tt>InetAddress</tt>.
+	 * @throws IOException
+	 *             if an I/O related error occurs.
 	 */
-	public TCPMasterConnection(InetAddress adr) {
-		m_Address = adr;
-	}// constructor
+	private void prepareTransport() throws IOException {
+		if (m_ModbusTransport == null) {
+			m_ModbusTransport = new ModbusTCPTransport(m_Socket);
+		} else {
+			m_ModbusTransport.setSocket(m_Socket);
+		}
+	}// prepareIO
 
 	/**
 	 * Opens this <tt>TCPMasterConnection</tt>.
@@ -78,17 +88,53 @@ public class TCPMasterConnection {
 	 *             if there is a network failure.
 	 */
 	public synchronized void connect() throws Exception {
-		if (!m_Connected) {
+		if (! isConnected()) {
 			if (Modbus.debug)
 				System.out.println("connect()");
+			
 			m_Socket = new Socket(m_Address, m_Port);
 			m_Socket.setReuseAddress(true);
 			m_Socket.setSoLinger(true, 1);
+			m_Socket.setKeepAlive(true);
+			
 			setTimeout(m_Timeout);
 			prepareTransport();
+			
 			m_Connected = true;
 		}
 	}// connect
+
+	/**
+	 * Tests if this <tt>TCPMasterConnection</tt> is connected.
+	 * 
+	 * @return <tt>true</tt> if connected, <tt>false</tt> otherwise.
+	 */
+	public synchronized boolean isConnected() {
+		if (m_Connected && m_Socket != null) {
+			if (!m_Socket.isConnected() || m_Socket.isClosed()
+					|| m_Socket.isInputShutdown()
+					|| m_Socket.isOutputShutdown()) {
+				try {
+					m_Socket.close();
+				} catch (IOException e) {
+					// Blah.
+				}
+				m_Connected = false;
+			} else {
+				try {
+					m_Socket.sendUrgentData(0);
+				} catch (IOException e) {
+					m_Connected = false;
+					try {
+						m_Socket.close();
+					} catch (IOException e1) {
+						// Do nothing.
+					}
+				}
+			}
+		}
+		return m_Connected;
+	}// isConnected
 
 	/**
 	 * Closes this <tt>TCPMasterConnection</tt>.
@@ -122,21 +168,6 @@ public class TCPMasterConnection {
 	public void setModbusTransport(ModbusTCPTransport trans) {
 		m_ModbusTransport = trans;
 	}
-
-	/**
-	 * Prepares the associated <tt>ModbusTransport</tt> of this
-	 * <tt>TCPMasterConnection</tt> for use.
-	 * 
-	 * @throws IOException
-	 *             if an I/O related error occurs.
-	 */
-	private void prepareTransport() throws IOException {
-		if (m_ModbusTransport == null) {
-			m_ModbusTransport = new ModbusTCPTransport(m_Socket);
-		} else {
-			m_ModbusTransport.setSocket(m_Socket);
-		}
-	}// prepareIO
 
 	/**
 	 * Returns the timeout for this <tt>TCPMasterConnection</tt>.
@@ -202,37 +233,24 @@ public class TCPMasterConnection {
 	public void setAddress(InetAddress adr) {
 		m_Address = adr;
 	}// setAddress
+	
+	public boolean getUseUrgentData() {
+		return m_useUrgentData;
+	}
+	
+	public void setUseUrgentData(boolean b) {
+		m_useUrgentData = b;
+	}
 
 	/**
-	 * Tests if this <tt>TCPMasterConnection</tt> is connected.
+	 * Constructs a <tt>TCPMasterConnection</tt> instance with a given
+	 * destination address.
 	 * 
-	 * @return <tt>true</tt> if connected, <tt>false</tt> otherwise.
+	 * @param adr
+	 *            the destination <tt>InetAddress</tt>.
 	 */
-	public synchronized boolean isConnected() {
-		if (m_Connected && m_Socket != null) {
-			if (!m_Socket.isConnected() || m_Socket.isClosed()
-					|| m_Socket.isInputShutdown()
-					|| m_Socket.isOutputShutdown()) {
-				try {
-					m_Socket.close();
-				} catch (IOException e) {
-					// Blah.
-				}
-				m_Connected = false;
-			} else {
-				try {
-					m_Socket.sendUrgentData(0);
-				} catch (IOException e) {
-					m_Connected = false;
-					try {
-						m_Socket.close();
-					} catch (IOException e1) {
-						// Do nothing.
-					}
-				}
-			}
-		}
-		return m_Connected;
-	}// isConnected
+	public TCPMasterConnection(InetAddress adr) {
+		m_Address = adr;
+	}// constructor
 
 }// class TCPMasterConnection
