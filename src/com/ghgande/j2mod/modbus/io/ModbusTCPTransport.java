@@ -49,7 +49,6 @@ import com.ghgande.j2mod.modbus.msg.ModbusMessage;
 import com.ghgande.j2mod.modbus.msg.ModbusRequest;
 import com.ghgande.j2mod.modbus.msg.ModbusResponse;
 import com.ghgande.j2mod.modbus.net.TCPMasterConnection;
-import com.ghgande.j2mod.modbus.net.TCPSlaveConnection;
 import com.ghgande.j2mod.modbus.util.ModbusUtil;
 
 /**
@@ -71,7 +70,6 @@ public class ModbusTCPTransport implements ModbusTransport {
 	private int m_Timeout = Modbus.DEFAULT_TIMEOUT;
 	private Socket m_Socket = null;
 	private	TCPMasterConnection m_Master = null;
-	private	TCPSlaveConnection m_Slave = null;
 	private boolean headless = false; // Some TCP implementations are.
 
 	/**
@@ -149,6 +147,15 @@ public class ModbusTCPTransport implements ModbusTransport {
 				System.err.println("Sent: "
 						+ ModbusUtil.toHex(m_ByteOut.toByteArray()));
 			// write more sophisticated exception handling
+		} catch (SocketException ex) {
+			if (! m_Master.isConnected()) {
+				try {
+					m_Master.connect();
+				} catch (Exception e) {
+					// Do nothing.
+				}
+			}
+			throw new ModbusIOException("I/O exception - failed to write.");
 		} catch (Exception ex) {
 			throw new ModbusIOException("I/O exception - failed to write.");
 		}
