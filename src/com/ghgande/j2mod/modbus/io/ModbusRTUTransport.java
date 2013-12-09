@@ -68,7 +68,10 @@ public class ModbusRTUTransport extends ModbusSerialTransport {
 	private boolean osIsWindows = false;
 
 	  public ModbusTransaction createTransaction() {
-		  return new ModbusSerialTransaction();
+		  ModbusSerialTransaction transaction =  new ModbusSerialTransaction();
+		  transaction.setTransport(this);
+		  
+		  return transaction;
 	  }
 
 	public void writeMessage(ModbusMessage msg) throws ModbusIOException {

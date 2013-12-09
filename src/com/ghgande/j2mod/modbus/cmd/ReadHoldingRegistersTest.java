@@ -37,6 +37,8 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import com.ghgande.j2mod.modbus.Modbus;
+import com.ghgande.j2mod.modbus.io.ModbusRTUTransport;
+import com.ghgande.j2mod.modbus.io.ModbusTCPTransport;
 import com.ghgande.j2mod.modbus.io.ModbusTransaction;
 import com.ghgande.j2mod.modbus.io.ModbusTransport;
 import com.ghgande.j2mod.modbus.msg.ModbusRequest;
@@ -96,11 +98,26 @@ public class ReadHoldingRegistersTest {
 		try {
 			try {
 				transport = ModbusMasterFactory.createModbusMaster(args[0]);
+				if (transport == null) {
+					System.err.println("Cannot open " + args[0]);
+					System.exit(1);
+				}
 				ref = Integer.parseInt(args[1]);
 				count = Integer.parseInt(args[2]);
 
 				if (args.length == 4)
 					repeat = Integer.parseInt(args[3]);
+				
+				if (transport instanceof ModbusTCPTransport) {
+					String	parts[] = args[0].split(":");
+					if (parts.length >= 4)
+						unit = Integer.parseInt(parts[3]);
+				} else if (transport instanceof ModbusRTUTransport) {
+					String parts[] = args[0].split(":");
+					if (parts.length >= 3)
+						unit = Integer.parseInt(parts[2]);
+				}
+System.err.println("Transport: " + transport + ", unit: " + unit);
 			} catch (Exception ex) {
 				ex.printStackTrace();
 				printUsage();
@@ -108,7 +125,8 @@ public class ReadHoldingRegistersTest {
 			}
 
 			req = new ReadMultipleRegistersRequest(ref, count);
-
+			
+System.err.println("setting unit = " + unit);
 			req.setUnitID(unit);
 			if (Modbus.debug)
 				System.out.println("Request: " + req.getHexMessage());
@@ -123,10 +141,13 @@ public class ReadHoldingRegistersTest {
 				trans.execute();
 				ModbusResponse response = trans.getResponse();
 
-				if (Modbus.debug)
-					System.out.println("Response: "
+				if (Modbus.debug) {
+					if (response != null)
+						System.out.println("Response: "
 							+ trans.getResponse().getHexMessage());
-				
+					else
+						System.err.println("No response to READ HOLDING request.\n");
+				}
 				if (! (response instanceof ReadMultipleRegistersResponse))
 					continue;
 				
@@ -139,10 +160,13 @@ public class ReadHoldingRegistersTest {
 			ex.printStackTrace();
 		} finally {
 			try {
-				transport.close();
+				if (transport != null)
+					transport.close();
 			} catch (IOException e) {
 				// Do nothing.
 			}
 		}
+		
+		System.exit(0);
 	}
 }

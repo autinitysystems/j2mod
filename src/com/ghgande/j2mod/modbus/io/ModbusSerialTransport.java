@@ -173,6 +173,36 @@ abstract public class ModbusSerialTransport
       System.out.println(e.getMessage());
     }
   }
+  
+  /**
+   * <code>setBaudRate</code> - Change the serial port baud rate
+   * 
+   * @param baud - an <code>int</code> value
+   */
+ public void setBaudRate(int baud) {
+		try {
+			SerialPort physicalPort = null;
+			int	stop;
+			int data;
+			int parity;
+			
+			if (!(m_CommPort instanceof SerialPort))
+				throw new UnsupportedCommOperationException(
+						"Cannot change baud rate on non-serial device.");
+			
+			physicalPort = (SerialPort) m_CommPort;
+			stop = physicalPort.getStopBits();
+			data = physicalPort.getDataBits();
+			parity = physicalPort.getParity();
+			
+			physicalPort.setSerialPortParams(baud, data, stop, parity);
+			
+			if (Modbus.debug)
+				System.err.println("baud rate is now " + physicalPort.getBaudRate());
+		} catch (UnsupportedCommOperationException x) {
+			System.out.println(x.getMessage());
+		}
+ }
 
   /**
    * Reads the own message echo produced in RS485 Echo Mode

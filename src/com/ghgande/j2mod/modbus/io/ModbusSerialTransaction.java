@@ -104,8 +104,12 @@ public class ModbusSerialTransaction
    */
   public void setSerialConnection(SerialConnection con) {
     m_SerialCon = con;
-    m_IO = con.getModbusTransport();
+    m_IO = m_SerialCon.getModbusTransport();
   }//setConnection
+  
+  public void setTransport(ModbusSerialTransport transport) {
+	  m_IO = transport;
+  }
 
   public int getTransactionID() {
     return c_TransactionID;
@@ -218,7 +222,7 @@ public class ModbusSerialTransaction
   private void assertExecutable()
       throws ModbusException {
     if (m_Request == null ||
-        m_SerialCon == null) {
+        m_IO == null) {
       throw new ModbusException(
           "Assertion failed, transaction not executable"
       );
