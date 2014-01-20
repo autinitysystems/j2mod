@@ -33,7 +33,7 @@
  ***/
 /***
  * Java Modbus Library (j2mod)
- * Copyright 2012, Julianne Frances Haugh
+ * Copyright 2012-2014, Julianne Frances Haugh
  * d/b/a greenHouse Gas and Electric
  * All rights reserved.
  *
@@ -66,10 +66,13 @@
  ***/
 package com.ghgande.j2mod.modbus.cmd;
 
+import java.io.IOException;
 import java.util.Arrays;
 
 import com.ghgande.j2mod.modbus.Modbus;
 import com.ghgande.j2mod.modbus.ModbusException;
+import com.ghgande.j2mod.modbus.io.ModbusRTUTransport;
+import com.ghgande.j2mod.modbus.io.ModbusTCPTransport;
 import com.ghgande.j2mod.modbus.io.ModbusTransaction;
 import com.ghgande.j2mod.modbus.io.ModbusTransport;
 import com.ghgande.j2mod.modbus.msg.ExceptionResponse;
@@ -79,22 +82,37 @@ import com.ghgande.j2mod.modbus.msg.ReadInputRegistersRequest;
 import com.ghgande.j2mod.modbus.msg.ReadInputRegistersResponse;
 import com.ghgande.j2mod.modbus.net.ModbusMasterFactory;
 import com.ghgande.j2mod.modbus.procimg.InputRegister;
-import com.ghgande.j2mod.modbus.procimg.Register;
 
 /**
- * Class that implements a simple command line tool for reading an analog input.
+ * Class that implements a simple command line tool for reading an analog
+ * input over a Modbus/TCP connection.
+ * 
+ * <p>
+ * Note that if you read from a remote I/O with a Modbus protocol stack, it will
+ * most likely expect that the communication is <i>kept alive</i> after the
+ * first read message.
+ * 
+ * <p>
+ * This can be achieved either by sending any kind of message, or by repeating
+ * the read message within a given period of time.
+ * 
+ * <p>
+ * If the time period is exceeded, then the device might react by turning off
+ * all signals of the I/O modules. After this timeout, the device might require
+ * a reset message.
  * 
  * @author Dieter Wimberger
  * @version 1.2rc1 (09/11/2004)
  * 
  * @author Julie Haugh
- * @version 0.97 (8/12/12)
+ * @version 1.03 (1/18/2014)
  */
 public class ReadInputRegistersTest {
 
 	private static void printUsage() {
-		System.out
-				.println("java com.ghgande.j2mod.modbus.cmd.ReadInputRegistersTest <address{:port} [String]> <register [int16]> <wordcount [int16]> {<repeat [int]>}");
+		System.out.println("java com.ghgande.j2mod.modbus.cmd.ReadInputRegistersTest"
+				+ " <address{:port{:unit}} [String]>"
+				+ " <base [int]> <count [int]> {<repeat [int]>}");
 	}
 
 	public static void main(String[] args) {
@@ -106,67 +124,94 @@ public class ReadInputRegistersTest {
 		int repeat = 1;
 		int unit = 0;
 
-		try {
+		// 1. Setup parameters
+		if (args.length < 3) {
+			printUsage();
+			System.exit(1);
+		}
 
-			// 1. Setup parameters
-			if (args.length < 3) {
-				printUsage();
-				System.exit(1);
-			} else {
-				try {
-					transport = ModbusMasterFactory.createModbusMaster(args[0]);
-					ref = Integer.parseInt(args[1]);
-					count = Integer.parseInt(args[2]);
-					if (args.length == 4) {
-						repeat = Integer.parseInt(args[3]);
-					}
-				} catch (Exception ex) {
-					ex.printStackTrace();
-					printUsage();
+		try {
+			try {
+				// 2. Open the connection.
+				transport = ModbusMasterFactory.createModbusMaster(args[0]);
+				if (transport == null) {
+					System.err.println("Cannot open " + args[0]);
 					System.exit(1);
 				}
+				ref = Integer.parseInt(args[1]);
+				count = Integer.parseInt(args[2]);
+
+				if (args.length > 3)
+					repeat = Integer.parseInt(args[3]);
+				
+				if (transport instanceof ModbusTCPTransport) {
+					String	parts[] = args[0].split(":");
+					if (parts.length >= 4)
+						unit = Integer.parseInt(parts[3]);
+				} else if (transport instanceof ModbusRTUTransport) {
+					String parts[] = args[0].split(":");
+					if (parts.length >= 3)
+						unit = Integer.parseInt(parts[2]);
+				}
+			} catch (Exception ex) {
+				ex.printStackTrace();
+				printUsage();
+				System.exit(1);
 			}
 
-			req = new ReadInputRegistersRequest(ref, count);
-			req.setUnitID(unit);
-			if (Modbus.debug)
-				System.out.println("Request: " + req.getHexMessage());
-
-			// 4. Prepare the transaction
-			trans = transport.createTransaction();
-			trans.setRequest(req);
-
 			// 5. Execute the transaction repeat times
+
 			for (int k = 0;k < repeat;k++) {
+System.err.println("try " + k);
+			// 3. Create the command.
+				req = new ReadInputRegistersRequest(ref, count);
+				req.setUnitID(unit);
+				if (Modbus.debug)
+					System.out.println("Request: " + req.getHexMessage());
+
+				// 4. Prepare the transaction
+				trans = transport.createTransaction();
+				trans.setRequest(req);
+
 				try {
 					trans.execute();
 				} catch (ModbusException x) {
 					System.err.println(x.getMessage());
 					continue;
 				}
+				ModbusResponse res = trans.getResponse();
 
-				ModbusResponse res = (ReadInputRegistersResponse) trans
-						.getResponse();
-
-				if (Modbus.debug)
-					System.out.println("Response: " + res.getHexMessage());
-
+				if (Modbus.debug) {
+					if (res != null)
+						System.out.println("Response: " + res.getHexMessage());
+					else
+						System.err.println("No response to READ INPUT request.");
+				}
 				if (res instanceof ExceptionResponse) {
 					ExceptionResponse exception = (ExceptionResponse) res;
 					System.out.println(exception);
 					continue;
 				}
 
+				if (! (res instanceof ReadInputRegistersResponse))
+					continue;
+				
 				ReadInputRegistersResponse data = (ReadInputRegistersResponse) res;
-				InputRegister[] values = data.getRegisters();
+				InputRegister values[] = data.getRegisters();
+				
 				System.out.println("Data: " + Arrays.toString(values));
 			}
-
-			// 6. Close the connection
-			transport.close();
-
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
+		
+		try {
+			// 6. Close the connection
+			if (transport != null)
+				transport.close();
+		} catch (IOException e) {
+			// Do nothing.
+		}
+		System.exit(0);
 	}
 }

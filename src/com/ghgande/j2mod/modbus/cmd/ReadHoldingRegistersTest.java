@@ -31,16 +31,51 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  ***/
+/***
+ * Java Modbus Library (j2mod)
+ * Copyright 2012-2014, Julianne Frances Haugh
+ * d/b/a greenHouse Gas and Electric
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * Neither the name of the author nor the names of its contributors
+ * may be used to endorse or promote products derived from this software
+ * without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS ``AS
+ * IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ ***/
 package com.ghgande.j2mod.modbus.cmd;
 
 import java.io.IOException;
 import java.util.Arrays;
 
 import com.ghgande.j2mod.modbus.Modbus;
+import com.ghgande.j2mod.modbus.ModbusException;
 import com.ghgande.j2mod.modbus.io.ModbusRTUTransport;
 import com.ghgande.j2mod.modbus.io.ModbusTCPTransport;
 import com.ghgande.j2mod.modbus.io.ModbusTransaction;
 import com.ghgande.j2mod.modbus.io.ModbusTransport;
+import com.ghgande.j2mod.modbus.msg.ExceptionResponse;
 import com.ghgande.j2mod.modbus.msg.ModbusRequest;
 import com.ghgande.j2mod.modbus.msg.ModbusResponse;
 import com.ghgande.j2mod.modbus.msg.ReadMultipleRegistersRequest;
@@ -70,13 +105,13 @@ import com.ghgande.j2mod.modbus.procimg.Register;
  * @version 1.2rc1 (09/11/2004)
  * 
  * @author Julie Haugh
- * @version @version@ (@date@)
+ * @version 1.03 (1/18/2014)
  */
 public class ReadHoldingRegistersTest {
 
 	private static void printUsage() {
 		System.out.println("java com.ghgande.j2mod.modbus.cmd.ReadHoldingRegistersTest"
-				+ " <connection [String]>"
+				+ " <address{:port{:unit}} [String]>"
 				+ " <base [int]> <count [int]> {<repeat [int]>}");
 	}
 
@@ -97,6 +132,7 @@ public class ReadHoldingRegistersTest {
 
 		try {
 			try {
+				// 2. Open the connection.
 				transport = ModbusMasterFactory.createModbusMaster(args[0]);
 				if (transport == null) {
 					System.err.println("Cannot open " + args[0]);
@@ -117,56 +153,64 @@ public class ReadHoldingRegistersTest {
 					if (parts.length >= 3)
 						unit = Integer.parseInt(parts[2]);
 				}
-System.err.println("Transport: " + transport + ", unit: " + unit);
 			} catch (Exception ex) {
 				ex.printStackTrace();
 				printUsage();
 				System.exit(1);
 			}
 
+			// 3. Create the command.
 			req = new ReadMultipleRegistersRequest(ref, count);
-			
-System.err.println("setting unit = " + unit);
 			req.setUnitID(unit);
 			if (Modbus.debug)
 				System.out.println("Request: " + req.getHexMessage());
 
-			// 3. Prepare the transaction
+			// 4. Prepare the transaction
 			trans = transport.createTransaction();
 			trans.setRequest(req);
 
-			// 4. Execute the transaction repeat times
+			// 5. Execute the transaction repeat times
 
 			for (int i = 0; i < repeat; i++) {
-				trans.execute();
-				ModbusResponse response = trans.getResponse();
+				try {
+					trans.execute();
+				} catch (ModbusException x) {
+					System.err.println(x.getMessage());
+					continue;
+				}
+				ModbusResponse res = trans.getResponse();
 
 				if (Modbus.debug) {
-					if (response != null)
-						System.out.println("Response: "
-							+ trans.getResponse().getHexMessage());
+					if (res != null)
+						System.out.println("Response: " + res.getHexMessage());
 					else
-						System.err.println("No response to READ HOLDING request.\n");
+						System.err.println("No response to READ HOLDING request.");
 				}
-				if (! (response instanceof ReadMultipleRegistersResponse))
+				if (res instanceof ExceptionResponse) {
+					ExceptionResponse exception = (ExceptionResponse) res;
+					System.out.println(exception);
+					continue;
+				}
+
+				if (! (res instanceof ReadMultipleRegistersResponse))
 					continue;
 				
-				ReadMultipleRegistersResponse data = (ReadMultipleRegistersResponse) response;
+				ReadMultipleRegistersResponse data = (ReadMultipleRegistersResponse) res;
 				Register values[] = data.getRegisters();
 				
 				System.out.println("Data: " + Arrays.toString(values));
 			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
-		} finally {
-			try {
-				if (transport != null)
-					transport.close();
-			} catch (IOException e) {
-				// Do nothing.
-			}
 		}
 		
+		try {
+			// 6. Close the connection
+			if (transport != null)
+				transport.close();
+		} catch (IOException e) {
+			// Do nothing.
+		}
 		System.exit(0);
 	}
 }
