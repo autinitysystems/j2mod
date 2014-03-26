@@ -33,8 +33,6 @@
  */
 package com.ghgande.j2mod.modbus.cmd;
 
-import java.util.Arrays;
-
 import com.ghgande.j2mod.modbus.Modbus;
 import com.ghgande.j2mod.modbus.ModbusException;
 import com.ghgande.j2mod.modbus.ModbusIOException;
@@ -44,46 +42,42 @@ import com.ghgande.j2mod.modbus.io.ModbusTransaction;
 import com.ghgande.j2mod.modbus.io.ModbusTransport;
 import com.ghgande.j2mod.modbus.msg.ExceptionResponse;
 import com.ghgande.j2mod.modbus.msg.ModbusResponse;
-import com.ghgande.j2mod.modbus.msg.ReadFileRecordRequest;
-import com.ghgande.j2mod.modbus.msg.ReadFileRecordRequest.RecordRequest;
-import com.ghgande.j2mod.modbus.msg.ReadFileRecordResponse;
-import com.ghgande.j2mod.modbus.msg.ReadFileRecordResponse.RecordResponse;
+import com.ghgande.j2mod.modbus.msg.ReadFIFOQueueRequest;
+import com.ghgande.j2mod.modbus.msg.ReadFIFOQueueResponse;
 import com.ghgande.j2mod.modbus.net.ModbusMasterFactory;
 
 /**
- * ReadFileRecordText -- Exercise the "READ FILE RECORD" Modbus
+ * ReadFIFOTest -- Exercise the "READ FIFO" Modbus
  * message.
  * 
  * @author Julie
- * @version 0.96
+ * @version 1.03
  */
-public class ReadFileRecordTest {
+public class ReadFIFOTest {
 
 	/**
 	 * usage -- Print command line arguments and exit.
 	 */
 	private static void usage() {
 		System.out.println(
-				"Usage: ReadFileRecord connection unit file record registers [repeat]");
+				"Usage: ReadFIFOTest connection unit fifo [repeat]");
 		
 		System.exit(1);
 	}
 
 	public static void main(String[] args) {
 		ModbusTransport	transport = null;
-		ReadFileRecordRequest request = null;
-		ReadFileRecordResponse response = null;
+		ReadFIFOQueueRequest request = null;
+		ReadFIFOQueueResponse response = null;
 		ModbusTransaction	trans = null;
 		int			unit = 0;
-		int			file = 0;
-		int			record = 0;
-		int			registers = 0;
+		int			fifo = 0;
 		int			requestCount = 1;
 
 		/*
 		 * Get the command line parameters.
 		 */
-		if (args.length < 5 || args.length > 6)
+		if (args.length < 3 || args.length > 4)
 			usage();
 		
 		try {
@@ -95,12 +89,10 @@ public class ReadFileRecordTest {
 				Thread.sleep(2000);
 			}
 			unit = Integer.parseInt(args[1]);
-			file = Integer.parseInt(args[2]);
-			record = Integer.parseInt(args[3]);
-			registers = Integer.parseInt(args[4]);
+			fifo = Integer.parseInt(args[2]);
 			
-			if (args.length > 5)
-				requestCount = Integer.parseInt(args[5]);
+			if (args.length > 3)
+				requestCount = Integer.parseInt(args[3]);
 		} catch (NumberFormatException x) {
 			System.err.println("Invalid parameter");
 			usage();
@@ -116,12 +108,9 @@ public class ReadFileRecordTest {
 				 * Setup the READ FILE RECORD request.  The record number
 				 * will be incremented for each loop.
 				 */
-				request = new ReadFileRecordRequest();
+				request = new ReadFIFOQueueRequest();
 				request.setUnitID(unit);
-				
-				RecordRequest recordRequest =
-						request.new RecordRequest(file, record + i, registers);
-				request.addRequest(recordRequest);
+				request.setReference(fifo);
 				
 				if (Modbus.debug)
 					System.out.println("Request: " + request.getHexMessage());
@@ -162,22 +151,20 @@ public class ReadFileRecordTest {
 					System.err.println(exception);
 
 					continue;
-				} else if (dummy instanceof ReadFileRecordResponse) {
-					response = (ReadFileRecordResponse) dummy;
+				} else if (dummy instanceof ReadFIFOQueueResponse) {
+					response = (ReadFIFOQueueResponse) dummy;
 
 					if (Modbus.debug)
 						System.out.println("Response: "
 								+ response.getHexMessage());
 
-					int count = response.getRecordCount();
+					int count = response.getWordCount();
+					System.out.println(count + " values");
+					
 					for (int j = 0;j < count;j++) {
-						RecordResponse data = response.getRecord(j);
-						short values[] = new short[data.getWordCount()];
-						for (int k = 0;k < data.getWordCount();k++)
-							values[k] = data.getRegister(k).toShort();
+						short value = (short) response.getRegister(j);
 						
-						System.out.println("data[" + i + "][" + j + "] = " +
-								Arrays.toString(values));
+						System.out.println("data[" + j + "] = " + value);
 					}
 					continue;
 				}

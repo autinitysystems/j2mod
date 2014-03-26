@@ -69,6 +69,7 @@ package com.ghgande.j2mod.modbus.msg;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Arrays;
 
 import com.ghgande.j2mod.modbus.Modbus;
 import com.ghgande.j2mod.modbus.procimg.InputRegister;
@@ -155,23 +156,27 @@ public final class ReadFIFOQueueResponse extends ModbusResponse {
 	 * such as for Modbus/TCP, it will have been read already.
 	 */
 	public void readData(DataInput din) throws IOException {
+		int byteCount;
 		
 		/*
 		 * Read and discard the byte count.  There's no way to indicate
 		 * the packet was inconsistent, other than throwing an I/O
 		 * exception for an invalid packet format ...
 		 */
-		din.readShort();
+		byteCount = din.readShort();
+System.err.println("byte count = " + byteCount);
 		
 		/*
 		 * The first register is the number of registers which
 		 * follow.  Save that as m_Count, not as a register.
 		 */
 		m_Count = din.readShort();
+System.err.println("register count = " + m_Count);
 		m_Registers = new InputRegister[m_Count];
 		
 		for (int i = 0;i < m_Count;i++)
 			m_Registers[i] = new SimpleInputRegister(din.readShort());
+System.err.println("registers: " + Arrays.toString(m_Registers));
 	}
 
 	/**
