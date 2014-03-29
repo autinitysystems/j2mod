@@ -44,6 +44,8 @@ import com.ghgande.j2mod.modbus.io.ModbusTransaction;
 import com.ghgande.j2mod.modbus.io.ModbusTransport;
 import com.ghgande.j2mod.modbus.msg.ExceptionResponse;
 import com.ghgande.j2mod.modbus.msg.ModbusResponse;
+import com.ghgande.j2mod.modbus.msg.ReadCommEventCounterRequest;
+import com.ghgande.j2mod.modbus.msg.ReadCommEventCounterResponse;
 import com.ghgande.j2mod.modbus.msg.ReadFileRecordRequest;
 import com.ghgande.j2mod.modbus.msg.ReadFileRecordRequest.RecordRequest;
 import com.ghgande.j2mod.modbus.msg.ReadFileRecordResponse;
@@ -189,6 +191,34 @@ public class ReadFileRecordTest {
 						"Unknown Response: " + dummy.getHexMessage());
 			}
 			
+			/*
+			 * Now read the number of events sent by the device.  Maybe it will
+			 * tell us something useful.
+			 */
+			ReadCommEventCounterRequest eventRequest = new ReadCommEventCounterRequest();
+			eventRequest.setUnitID(unit);
+			
+			/*
+			 * Setup the transaction.
+			 */
+			trans = transport.createTransaction();
+			trans.setRequest(eventRequest);
+
+			/*
+			 * Execute the transaction.
+			 */
+			try {
+				trans.execute();
+				ModbusResponse dummy = trans.getResponse();
+				
+				if (dummy instanceof ReadCommEventCounterResponse) {
+					ReadCommEventCounterResponse eventResponse = (ReadCommEventCounterResponse) dummy;
+					System.out.println("  Events: " + eventResponse.getEventCount());
+				}
+			} catch (ModbusException x) {
+				// Do nothing -- this isn't required.					
+			}
+
 			/*
 			 * Teardown the connection.
 			 */
