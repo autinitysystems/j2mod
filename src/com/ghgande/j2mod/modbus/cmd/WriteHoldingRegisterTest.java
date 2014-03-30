@@ -37,7 +37,10 @@ import java.io.IOException;
 import java.net.InetAddress;
 
 import com.ghgande.j2mod.modbus.Modbus;
+import com.ghgande.j2mod.modbus.io.ModbusRTUTransport;
+import com.ghgande.j2mod.modbus.io.ModbusSerialTransaction;
 import com.ghgande.j2mod.modbus.io.ModbusTCPTransaction;
+import com.ghgande.j2mod.modbus.io.ModbusTCPTransport;
 import com.ghgande.j2mod.modbus.io.ModbusTransaction;
 import com.ghgande.j2mod.modbus.io.ModbusTransport;
 import com.ghgande.j2mod.modbus.msg.ModbusRequest;
@@ -102,6 +105,21 @@ public class WriteHoldingRegisterTest {
 
 				if (args.length == 4)
 					repeat = Integer.parseInt(args[3]);
+				
+				if (transport instanceof ModbusTCPTransport) {
+					String	parts[] = args[0].split(":");
+					if (parts.length >= 4)
+						unit = Integer.parseInt(parts[3]);
+				} else if (transport instanceof ModbusRTUTransport) {
+					String parts[] = args[0].split(":");
+					if (parts.length >= 3)
+						unit = Integer.parseInt(parts[2]);
+					
+					String baud = System.getProperty("com.ghgande.j2mod.modbus.baud");
+					if (baud != null) {
+						((ModbusRTUTransport) transport).setBaudRate(Integer.parseInt(baud));
+					}
+				}
 			} catch (Exception ex) {
 				ex.printStackTrace();
 				printUsage();
@@ -112,12 +130,14 @@ public class WriteHoldingRegisterTest {
 					new SimpleRegister(value));
 
 			req.setUnitID(unit);
-			if (Modbus.debug)
-				System.out.println("Request: " + req.getHexMessage());
 
 			// 3. Prepare the transaction
 			trans = transport.createTransaction();
 			trans.setRequest(req);
+			req.setHeadless(trans instanceof ModbusSerialTransaction);
+
+			if (Modbus.debug)
+				System.out.println("Request: " + req.getHexMessage());
 
 			// 4. Execute the transaction repeat times
 

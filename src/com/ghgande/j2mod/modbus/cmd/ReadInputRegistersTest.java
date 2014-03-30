@@ -180,16 +180,16 @@ System.err.println("try " + k);
 			// 3. Create the command.
 				req = new ReadInputRegistersRequest(ref, count);
 				req.setUnitID(unit);
+				
+				// 4. Prepare the transaction
+				trans = transport.createTransaction();
+				trans.setRequest(req);
+				trans.setRetries(1);
 				req.setHeadless(trans instanceof ModbusSerialTransaction);
 				
 				if (Modbus.debug)
 					System.out.println("Request: " + req.getHexMessage());
 
-				// 4. Prepare the transaction
-				trans = transport.createTransaction();
-				trans.setRequest(req);
-				trans.setRetries(1);
-				
 				if (trans instanceof ModbusSerialTransaction) {
 					/*
 					 * 10ms interpacket delay.

@@ -71,62 +71,56 @@ import java.util.Arrays;
 
 import com.ghgande.j2mod.modbus.Modbus;
 import com.ghgande.j2mod.modbus.ModbusException;
-import com.ghgande.j2mod.modbus.io.ModbusRTUTransport;
 import com.ghgande.j2mod.modbus.io.ModbusSerialTransaction;
-import com.ghgande.j2mod.modbus.io.ModbusTCPTransport;
+import com.ghgande.j2mod.modbus.io.ModbusSerialTransport;
 import com.ghgande.j2mod.modbus.io.ModbusTransaction;
 import com.ghgande.j2mod.modbus.io.ModbusTransport;
 import com.ghgande.j2mod.modbus.msg.ExceptionResponse;
 import com.ghgande.j2mod.modbus.msg.ModbusRequest;
 import com.ghgande.j2mod.modbus.msg.ModbusResponse;
-import com.ghgande.j2mod.modbus.msg.ReadMultipleRegistersRequest;
-import com.ghgande.j2mod.modbus.msg.ReadMultipleRegistersResponse;
+import com.ghgande.j2mod.modbus.msg.ReadCommEventLogRequest;
+import com.ghgande.j2mod.modbus.msg.ReadCommEventLogResponse;
 import com.ghgande.j2mod.modbus.net.ModbusMasterFactory;
-import com.ghgande.j2mod.modbus.procimg.Register;
 
 /**
- * Class that implements a simple command line tool for writing to an analog
- * output over a Modbus/TCP connection.
+ * Class that implements a simple command line tool for reading the communications
+ * event log.
  * 
  * <p>
- * Note that if you write to a remote I/O with a Modbus protocol stack, it will
+ * Note that if you read from a remote I/O with a Modbus protocol stack, it will
  * most likely expect that the communication is <i>kept alive</i> after the
- * first write message.
+ * first read message.
  * 
  * <p>
  * This can be achieved either by sending any kind of message, or by repeating
- * the write message within a given period of time.
+ * the read message within a given period of time.
  * 
  * <p>
  * If the time period is exceeded, then the device might react by turning off
  * all signals of the I/O modules. After this timeout, the device might require
  * a reset message.
  * 
- * @author Dieter Wimberger
- * @version 1.2rc1 (09/11/2004)
- * 
  * @author Julie Haugh
- * @version 1.03 (1/18/2014)
+ * @version 1.04 (1/18/2014)
  */
-public class ReadHoldingRegistersTest {
+public class ReadCommEventLogTest {
 
 	private static void printUsage() {
-		System.out.println("java com.ghgande.j2mod.modbus.cmd.ReadHoldingRegistersTest"
-				+ " <address{:port{:unit}} [String]>"
-				+ " <base [int]> <count [int]> {<repeat [int]>}");
+		System.out.println("java com.ghgande.j2mod.modbus.cmd.ReadCommEventLogTest"
+				+ " <address{:port} [String]>"
+				+ " <unit [int]>"
+				+ " {<repeat [int]>}");
 	}
 
 	public static void main(String[] args) {
 		ModbusTransport transport = null;
 		ModbusRequest req = null;
 		ModbusTransaction trans = null;
-		int ref = 0;
-		int count = 0;
 		int repeat = 1;
 		int unit = 0;
 
 		// 1. Setup parameters
-		if (args.length < 3) {
+		if (args.length < 2) {
 			printUsage();
 			System.exit(1);
 		}
@@ -139,47 +133,54 @@ public class ReadHoldingRegistersTest {
 					System.err.println("Cannot open " + args[0]);
 					System.exit(1);
 				}
-				ref = Integer.parseInt(args[1]);
-				count = Integer.parseInt(args[2]);
-
-				if (args.length == 4)
-					repeat = Integer.parseInt(args[3]);
 				
-				if (transport instanceof ModbusTCPTransport) {
-					String	parts[] = args[0].split(":");
-					if (parts.length >= 4)
-						unit = Integer.parseInt(parts[3]);
-				} else if (transport instanceof ModbusRTUTransport) {
-					String parts[] = args[0].split(":");
-					if (parts.length >= 3)
-						unit = Integer.parseInt(parts[2]);
-					
-					String baud = System.getProperty("com.ghgande.j2mod.modbus.baud");
-					if (baud != null) {
-						((ModbusRTUTransport) transport).setBaudRate(Integer.parseInt(baud));
-					}
+				if (transport instanceof ModbusSerialTransport) {
+					((ModbusSerialTransport) transport).setReceiveTimeout(500);
+					((ModbusSerialTransport) transport).setBaudRate(19200);
 				}
+								
+				/*
+				 * There are a number of devices which won't initialize immediately
+				 * after being opened.  Take a moment to let them come up.
+				 */
+				Thread.sleep(2000);
+				
+				if (args.length > 1)
+					unit = Integer.parseInt(args[1]);
+				
+				if (args.length > 2)
+					repeat = Integer.parseInt(args[2]);
+				
 			} catch (Exception ex) {
 				ex.printStackTrace();
 				printUsage();
 				System.exit(1);
 			}
 
-			// 3. Create the command.
-			req = new ReadMultipleRegistersRequest(ref, count);
-			req.setUnitID(unit);
-
-			// 4. Prepare the transaction
-			trans = transport.createTransaction();
-			trans.setRequest(req);
-			req.setHeadless(trans instanceof ModbusSerialTransaction);
-
-			if (Modbus.debug)
-				System.out.println("Request: " + req.getHexMessage());
-
 			// 5. Execute the transaction repeat times
 
-			for (int i = 0; i < repeat; i++) {
+			for (int k = 0;k < repeat;k++) {
+System.err.println("try " + k);
+			// 3. Create the command.
+				req = new ReadCommEventLogRequest();
+				req.setUnitID(unit);
+				req.setHeadless(trans instanceof ModbusSerialTransaction);
+				
+				if (Modbus.debug)
+					System.out.println("Request: " + req.getHexMessage());
+
+				// 4. Prepare the transaction
+				trans = transport.createTransaction();
+				trans.setRequest(req);
+				trans.setRetries(1);
+				
+				if (trans instanceof ModbusSerialTransaction) {
+					/*
+					 * 10ms interpacket delay.
+					 */
+					((ModbusSerialTransaction) trans).setTransDelayMS(10);
+				}
+
 				try {
 					trans.execute();
 				} catch (ModbusException x) {
@@ -192,7 +193,7 @@ public class ReadHoldingRegistersTest {
 					if (res != null)
 						System.out.println("Response: " + res.getHexMessage());
 					else
-						System.err.println("No response to READ HOLDING request.");
+						System.err.println("No response to GET COMM EVENT LOG request.");
 				}
 				if (res instanceof ExceptionResponse) {
 					ExceptionResponse exception = (ExceptionResponse) res;
@@ -200,13 +201,16 @@ public class ReadHoldingRegistersTest {
 					continue;
 				}
 
-				if (! (res instanceof ReadMultipleRegistersResponse))
+				if (! (res instanceof ReadCommEventLogResponse))
 					continue;
 				
-				ReadMultipleRegistersResponse data = (ReadMultipleRegistersResponse) res;
-				Register values[] = data.getRegisters();
-				
-				System.out.println("Data: " + Arrays.toString(values));
+				ReadCommEventLogResponse data = (ReadCommEventLogResponse) res;
+				System.out.println("Status: " + data.getStatus() +
+						", Events " + data.getEventCount() +
+						", Messages " + data.getMessageCount() +
+						", Entries " + data.getEvents().length);
+				System.out.println("Entries:");
+				System.out.println(Arrays.toString(data.getEvents()));
 			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
