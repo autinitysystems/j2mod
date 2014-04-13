@@ -78,7 +78,7 @@ import com.ghgande.j2mod.modbus.procimg.Register;
 
 
 /**
- * Class implementing a <tt>Read MEI Data</tt> request.
+ * Class implementing a <tt>Mask Write Register</tt> request.
  * 
  * @author Julie Haugh (jfh@ghgande.com)
  * @version jamod-1.2rc1-ghpc
@@ -181,17 +181,13 @@ public final class MaskWriteRegisterRequest extends ModbusRequest {
 			 * applied to set them.
 			 */
 			int value = register.getValue();
-System.err.println("original value = " + value);
 			
-System.err.println("and = " + m_AndMask + ", or = " + m_OrMask);
 			value = (value & m_AndMask) | m_OrMask;
-System.err.println("new value = " + value);
 			
 			/*
 			 * Store the modified value back where it came from.
 			 */
 			register.setValue(value);
-System.err.println("Done.");
 		} catch (IllegalAddressException iaex) {
 			return createExceptionResponse(Modbus.ILLEGAL_ADDRESS_EXCEPTION);
 		}
