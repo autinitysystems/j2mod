@@ -361,9 +361,12 @@ public class ModbusTCPTransport implements ModbusTransport {
 		m_Output = new DataOutputStream(new BufferedOutputStream(
 				socket.getOutputStream()));
 
-		m_ByteIn = new BytesInputStream(Modbus.MAX_MESSAGE_LENGTH);
+		/*
+		 * Modbus/TCP adds a header which must be accounted for.
+		 */
+		m_ByteIn = new BytesInputStream(Modbus.MAX_MESSAGE_LENGTH+6);
 
-		m_ByteOut = new BytesOutputStream(Modbus.MAX_MESSAGE_LENGTH);
+		m_ByteOut = new BytesOutputStream(Modbus.MAX_MESSAGE_LENGTH+6);
 	}
 
 	/**
