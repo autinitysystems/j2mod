@@ -122,6 +122,15 @@ public final class ReadFIFOQueueResponse extends ModbusResponse {
 		}
 	}
 	
+	public int[] getRegisters() {
+		int	values[] = new int[m_Count];
+		
+		for (int i = 0;i < m_Count;i++)
+			values[i] = getRegister(i);
+		
+		return values;
+	}
+	
 	public int getRegister(int index) {
 		return m_Registers[index].getValue();
 	}
@@ -164,19 +173,16 @@ public final class ReadFIFOQueueResponse extends ModbusResponse {
 		 * exception for an invalid packet format ...
 		 */
 		byteCount = din.readShort();
-System.err.println("byte count = " + byteCount);
 		
 		/*
 		 * The first register is the number of registers which
 		 * follow.  Save that as m_Count, not as a register.
 		 */
 		m_Count = din.readShort();
-System.err.println("register count = " + m_Count);
 		m_Registers = new InputRegister[m_Count];
 		
 		for (int i = 0;i < m_Count;i++)
 			m_Registers[i] = new SimpleInputRegister(din.readShort());
-System.err.println("registers: " + Arrays.toString(m_Registers));
 	}
 
 	/**
