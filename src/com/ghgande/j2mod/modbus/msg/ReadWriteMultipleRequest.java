@@ -83,11 +83,11 @@ import com.ghgande.j2mod.modbus.procimg.SimpleRegister;
 /**
  * Class implementing a <tt>Read / Write Multiple Registers</tt> request.
  * 
- * @author Julie Haugh (jfh@ghgande.com)
+ * @author Julie Haugh
  * @version jamod-1.2rc1-ghpc
  * 
- * @author jfhaugh (jfh@ghgande.com)
- * @version @version@ (@date@)
+ * @author Julie Haugh
+ * @version 1.05
  */
 public final class ReadWriteMultipleRequest extends ModbusRequest {
 	private NonWordDataHandler m_NonWordDataHandler;
@@ -96,188 +96,6 @@ public final class ReadWriteMultipleRequest extends ModbusRequest {
 	private int m_WriteReference;
 	private int m_WriteCount;
 	private Register m_WriteRegisters[];
-
-	/**
-	 * Sets the reference of the register to writing to with this
-	 * <tt>ReadWriteMultipleRequest</tt>.
-	 * <p>
-	 * 
-	 * @param ref
-	 *            the reference of the register to start writing to as
-	 *            <tt>int</tt>.
-	 */
-	public void setReadReference(int ref) {
-		m_ReadReference = ref;
-	}
-
-	/**
-	 * Returns the reference of the register to start writing to with this
-	 * <tt>ReadWriteMultipleRequest</tt>.
-	 * <p>
-	 * 
-	 * @return the reference of the register to start writing to as <tt>int</tt>
-	 *         .
-	 */
-	public int getReadReference() {
-		return m_ReadReference;
-	}
-
-	/**
-	 * Sets the reference of the register to write to with this
-	 * <tt>ReadWriteMultipleRequest</tt>.
-	 * <p>
-	 * 
-	 * @param ref
-	 *            the reference of the register to start writing to as
-	 *            <tt>int</tt>.
-	 */
-	public void setWriteReference(int ref) {
-		m_WriteReference = ref;
-	}
-
-	/**
-	 * Returns the reference of the register to start writing to with this
-	 * <tt>ReadWriteMultipleRequest</tt>.
-	 * <p>
-	 * 
-	 * @return the reference of the register to start writing to as <tt>int</tt>
-	 *         .
-	 */
-	public int getWriteReference() {
-		return m_WriteReference;
-	}
-
-	/**
-	 * Sets the registers to be written with this
-	 * <tt>ReadWriteMultipleRequest</tt>.
-	 * <p>
-	 * 
-	 * @param registers
-	 *            the registers to be written as <tt>Register[]</tt>.
-	 */
-	public void setRegisters(Register[] registers) {
-		m_WriteRegisters = registers;
-		m_WriteCount = registers != null ? registers.length : 0;
-	}
-
-	/**
-	 * Returns the registers to be written with this
-	 * <tt>ReadWriteMultipleRequest</tt>.
-	 * <p>
-	 * 
-	 * @return the registers to be read as <tt>Register[]</tt>.
-	 */
-	public Register[] getRegisters() {
-		return m_WriteRegisters;
-	}
-
-	/**
-	 * Returns the <tt>Register</tt> at the given position (relative to the
-	 * reference used in the request).
-	 * 
-	 * @param index
-	 *            the relative index of the <tt>Register</tt>.
-	 * 
-	 * @return the register as <tt>Register</tt>.
-	 * 
-	 * @throws IndexOutOfBoundsException
-	 *             if the index is out of bounds.
-	 */
-	public Register getRegister(int index) throws IndexOutOfBoundsException {
-		if (index < 0)
-			throw new IndexOutOfBoundsException(index + " < 0");
-
-		if (index >= getWriteWordCount())
-			throw new IndexOutOfBoundsException(index + " > "
-					+ getWriteWordCount());
-
-		return m_WriteRegisters[index];
-	}
-
-	/**
-	 * Returns the value of the register at the given position (relative to the
-	 * reference used in the request) interpreted as unsigned short.
-	 * 
-	 * @param index
-	 *            the relative index of the register for which the value should
-	 *            be retrieved.
-	 * 
-	 * @return the value as <tt>int</tt>.
-	 * 
-	 * @throws IndexOutOfBoundsException
-	 *             if the index is out of bounds.
-	 */
-	public int getReadRegisterValue(int index) throws IndexOutOfBoundsException {
-		return getRegister(index).toUnsignedShort();
-	}
-
-	/**
-	 * Returns the number of bytes representing the values to be written.
-	 * 
-	 * @return the number of bytes to be written as <tt>int</tt>.
-	 */
-	public int getByteCount() {
-		return getWriteWordCount() * 2;
-	}
-
-	/**
-	 * Returns the number of words to be written.
-	 * 
-	 * @return the number of words to be written as <tt>int</tt>.
-	 */
-	public int getWriteWordCount() {
-		return m_WriteCount;
-	}
-
-	/**
-	 * Sets the number of words to be written.
-	 * 
-	 * @param count
-	 *            the number of words to be written as <tt>int</tt>.
-	 */
-	public void setWriteWordCount(int count) {
-		m_WriteCount = count;
-	}
-
-	/**
-	 * Returns the number of words to be read.
-	 * 
-	 * @return the number of words to be read as <tt>int</tt>.
-	 */
-	public int getReadWordCount() {
-		return m_ReadCount;
-	}
-
-	/**
-	 * Sets the number of words to be read.
-	 * 
-	 * @param count
-	 *            the number of words to be read as <tt>int</tt>.
-	 */
-	public void setReadWordCount(int count) {
-		m_ReadCount = count;
-	}
-
-	/**
-	 * Sets a non word data handler. A non-word data handler is responsible for
-	 * converting words from a Modbus packet into the non-word values associated
-	 * with the actual device's registers.
-	 * 
-	 * @param dhandler
-	 *            a <tt>NonWordDataHandler</tt> instance.
-	 */
-	public void setNonWordDataHandler(NonWordDataHandler dhandler) {
-		m_NonWordDataHandler = dhandler;
-	}
-
-	/**
-	 * Returns the actual non word data handler.
-	 * 
-	 * @return the actual <tt>NonWordDataHandler</tt>.
-	 */
-	public NonWordDataHandler getNonWordDataHandler() {
-		return m_NonWordDataHandler;
-	}
 
 	/**
 	 * createResponse -- create an empty response for this request.
@@ -305,10 +123,6 @@ public final class ReadWriteMultipleRequest extends ModbusRequest {
 		return response;
 	}
 
-	/**
-	 * The ModbusCoupler doesn't have a means of reporting the slave state or ID
-	 * information.
-	 */
 	public ModbusResponse createResponse() {
 		ReadWriteMultipleResponse response = null;
 		InputRegister[] readRegs = null;
@@ -339,6 +153,188 @@ public final class ReadWriteMultipleRequest extends ModbusRequest {
 		response.setRegisters(readRegs);
 
 		return response;
+	}
+
+	/**
+	 * setReadReference - Sets the reference of the register to writing to with
+	 * this <tt>ReadWriteMultipleRequest</tt>.
+	 * <p>
+	 * 
+	 * @param ref
+	 *            the reference of the register to start writing to as
+	 *            <tt>int</tt>.
+	 */
+	public void setReadReference(int ref) {
+		m_ReadReference = ref;
+	}
+
+	/**
+	 * getReadReference - Returns the reference of the register to start writing
+	 * to with this <tt>ReadWriteMultipleRequest</tt>.
+	 * <p>
+	 * 
+	 * @return the reference of the register to start writing to as <tt>int</tt>
+	 *         .
+	 */
+	public int getReadReference() {
+		return m_ReadReference;
+	}
+
+	/**
+	 * setWriteReference - Sets the reference of the register to write to with
+	 * this <tt>ReadWriteMultipleRequest</tt>.
+	 * <p>
+	 * 
+	 * @param ref
+	 *            the reference of the register to start writing to as
+	 *            <tt>int</tt>.
+	 */
+	public void setWriteReference(int ref) {
+		m_WriteReference = ref;
+	}
+
+	/**
+	 * getWriteReference - Returns the reference of the register to start
+	 * writing to with this <tt>ReadWriteMultipleRequest</tt>.
+	 * <p>
+	 * 
+	 * @return the reference of the register to start writing to as <tt>int</tt>
+	 *         .
+	 */
+	public int getWriteReference() {
+		return m_WriteReference;
+	}
+
+	/**
+	 * setRegisters - Sets the registers to be written with this
+	 * <tt>ReadWriteMultipleRequest</tt>.
+	 * <p>
+	 * 
+	 * @param registers
+	 *            the registers to be written as <tt>Register[]</tt>.
+	 */
+	public void setRegisters(Register[] registers) {
+		m_WriteRegisters = registers;
+		m_WriteCount = registers != null ? registers.length : 0;
+	}
+
+	/**
+	 * getRegisters - Returns the registers to be written with this
+	 * <tt>ReadWriteMultipleRequest</tt>.
+	 * <p>
+	 * 
+	 * @return the registers to be read as <tt>Register[]</tt>.
+	 */
+	public Register[] getRegisters() {
+		return m_WriteRegisters;
+	}
+
+	/**
+	 * getRegister - Returns the specified <tt>Register</tt>.
+	 * 
+	 * @param index
+	 *            the index of the <tt>Register</tt>.
+	 * 
+	 * @return the register as <tt>Register</tt>.
+	 * 
+	 * @throws IndexOutOfBoundsException
+	 *             if the index is out of bounds.
+	 */
+	public Register getRegister(int index) throws IndexOutOfBoundsException {
+		if (index < 0)
+			throw new IndexOutOfBoundsException(index + " < 0");
+
+		if (index >= getWriteWordCount())
+			throw new IndexOutOfBoundsException(index + " > "
+					+ getWriteWordCount());
+
+		return m_WriteRegisters[index];
+	}
+
+	/**
+	 * getReadRegisterValue - Returns the value of the specified register
+	 * interpreted as unsigned short.
+	 * 
+	 * @param index
+	 *            the relative index of the register for which the value should
+	 *            be retrieved.
+	 * 
+	 * @return the value as <tt>int</tt>.
+	 * 
+	 * @throws IndexOutOfBoundsException
+	 *             if the index is out of bounds.
+	 */
+	public int getReadRegisterValue(int index) throws IndexOutOfBoundsException {
+		return getRegister(index).toUnsignedShort();
+	}
+
+	/**
+	 * getByteCount - Returns the number of bytes representing the values to be
+	 * written.
+	 * 
+	 * @return the number of bytes to be written as <tt>int</tt>.
+	 */
+	public int getByteCount() {
+		return getWriteWordCount() * 2;
+	}
+
+	/**
+	 * getWriteWordCount - Returns the number of words to be written.
+	 * 
+	 * @return the number of words to be written as <tt>int</tt>.
+	 */
+	public int getWriteWordCount() {
+		return m_WriteCount;
+	}
+
+	/**
+	 * setWriteWordCount - Sets the number of words to be written.
+	 * 
+	 * @param count
+	 *            the number of words to be written as <tt>int</tt>.
+	 */
+	public void setWriteWordCount(int count) {
+		m_WriteCount = count;
+	}
+
+	/**
+	 * getReadWordCount - Returns the number of words to be read.
+	 * 
+	 * @return the number of words to be read as <tt>int</tt>.
+	 */
+	public int getReadWordCount() {
+		return m_ReadCount;
+	}
+
+	/**
+	 * setReadWordCount - Sets the number of words to be read.
+	 * 
+	 * @param count
+	 *            the number of words to be read as <tt>int</tt>.
+	 */
+	public void setReadWordCount(int count) {
+		m_ReadCount = count;
+	}
+
+	/**
+	 * setNonWordDataHandler - Sets a non word data handler. A non-word data
+	 * handler is responsible for converting words from a Modbus packet into the
+	 * non-word values associated with the actual device's registers.
+	 * 
+	 * @param dhandler
+	 *            a <tt>NonWordDataHandler</tt> instance.
+	 */
+	public void setNonWordDataHandler(NonWordDataHandler dhandler) {
+		m_NonWordDataHandler = dhandler;
+	}
+
+	/**
+	 * getNonWordDataHandler - Returns the actual non word data handler.
+	 * 
+	 * @return the actual <tt>NonWordDataHandler</tt>.
+	 */
+	public NonWordDataHandler getNonWordDataHandler() {
+		return m_NonWordDataHandler;
 	}
 
 	/**
@@ -394,10 +390,10 @@ public final class ReadWriteMultipleRequest extends ModbusRequest {
 		results[8] = (byte) (m_WriteCount * 2);
 
 		int offset = 9;
-		for (int i = 0;i < m_WriteCount;i++) {
+		for (int i = 0; i < m_WriteCount; i++) {
 			Register reg = getRegister(i);
 			byte[] bytes = reg.toBytes();
-			
+
 			results[offset++] = bytes[0];
 			results[offset++] = bytes[1];
 		}
@@ -405,7 +401,7 @@ public final class ReadWriteMultipleRequest extends ModbusRequest {
 	}
 
 	/**
-	 * Constructs a new <tt>Report Slave ID request</tt> instance.
+	 * Constructs a new <tt>Read/Write Multiple Registers Request</tt> instance.
 	 */
 	public ReadWriteMultipleRequest(int unit, int readRef, int readCount,
 			int writeRef, int writeCount) {
@@ -424,12 +420,12 @@ public final class ReadWriteMultipleRequest extends ModbusRequest {
 		m_WriteReference = writeRef;
 		m_WriteCount = writeCount;
 		m_WriteRegisters = new Register[writeCount];
-		for (int i = 0;i < writeCount;i++)
+		for (int i = 0; i < writeCount; i++)
 			m_WriteRegisters[i] = new SimpleRegister(0);
 	}
 
 	/**
-	 * Constructs a new <tt>Report Slave ID request</tt> instance.
+	 * Constructs a new <tt>Read/Write Multiple Registers Request</tt> instance.
 	 */
 	public ReadWriteMultipleRequest(int unit) {
 		super();
@@ -444,7 +440,7 @@ public final class ReadWriteMultipleRequest extends ModbusRequest {
 	}
 
 	/**
-	 * Constructs a new <tt>Report Slave ID request</tt> instance.
+	 * Constructs a new <tt>Read/Write Multiple Registers Request</tt> instance.
 	 */
 	public ReadWriteMultipleRequest() {
 		super();
