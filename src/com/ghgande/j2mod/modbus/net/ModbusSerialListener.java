@@ -112,6 +112,9 @@ public class ModbusSerialListener implements ModbusListener {
 						 * enforced.
 						 */
 						ModbusRequest request = transport.readRequest();
+						if (request == null)
+							continue;
+						
 						if (m_Unit != 0 && m_Unit != request.getUnitID())
 							continue;
 
@@ -131,12 +134,16 @@ public class ModbusSerialListener implements ModbusListener {
 						/*
 						 * Log the Request and Response messages.
 						 */
-						if (Modbus.debug) {
-							System.out.println("Request:"
-									+ request.getHexMessage());
+						try {
+							if (Modbus.debug) {
+								System.out.println("Request (" + request.getClass().getName() + "): "
+										+ request.getHexMessage());
 
-							System.out.println("Response:"
-									+ response.getHexMessage());
+								System.out.println("Response (" + response.getClass().getName() + "): "
+										+ response.getHexMessage());
+							}
+						} catch (RuntimeException x) {
+							// Ignore.
 						}
 
 						/*
