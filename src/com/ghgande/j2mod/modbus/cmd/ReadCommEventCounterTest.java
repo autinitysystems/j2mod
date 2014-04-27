@@ -159,7 +159,6 @@ public class ReadCommEventCounterTest {
 			// 5. Execute the transaction repeat times
 
 			for (int k = 0;k < repeat;k++) {
-System.err.println("try " + k);
 			// 3. Create the command.
 				req = new ReadCommEventCounterRequest();
 				req.setUnitID(unit);

@@ -45,6 +45,10 @@ import com.ghgande.j2mod.modbus.util.SerialParameters;
  * 
  * @author Dieter Wimberger
  * @version 1.2rc1 (09/11/2004)
+ * 
+ * @author Julie Haugh
+ * Added ability to specify the number of coils, discreates, input and
+ * holding registers.
  */
 public class SerialSlaveTest {
 
@@ -52,7 +56,42 @@ public class SerialSlaveTest {
 
 		ModbusSerialListener listener = null;
 		SimpleProcessImage spi = new SimpleProcessImage();
-		String portname = args[0];
+		String portname = null;
+		boolean	hasUnit = false;
+		int unit = 2;
+		int		coils = 2;
+		int		discretes = 4;
+		boolean	hasInputs = false;
+		int		inputs = 1;
+		boolean	hasHoldings = false;
+		int		holdings = 1;
+		int		arg = 0;
+		
+		for (arg = 0;arg < args.length;arg++) {
+			if (args[arg].equals("--port") || args[arg].equals("-p"))
+				portname = args[++arg];
+			else if (args[arg].equals("--unit") || args[arg].equals("-u")) {
+				unit = Integer.parseInt(args[++arg]);
+				hasUnit = true;
+			} else if (args[arg].equals("--coils") || args[arg].equals("-c")) {
+				coils = Integer.parseInt(args[++arg]);
+			} else if (args[arg].equals("--discretes") || args[arg].equals("-d")) {
+				discretes = Integer.parseInt(args[++arg]);
+			} else if (args[arg].equals("--inputs") || args[arg].equals("-i")) {
+				inputs = Integer.parseInt(args[++arg]);
+				hasInputs = true;
+			} else if (args[arg].equals("--holdings") || args[arg].equals("-h")) {
+				holdings = Integer.parseInt(args[++arg]);
+				hasHoldings = true;
+			} else
+				break;
+		}
+		
+		if (arg < args.length && portname == null)
+			portname = args[arg++];
+		
+		if (arg < args.length && ! hasUnit)
+			unit = Integer.parseInt(args[arg++]);
 
 		if (Modbus.debug)
 			System.out.println("j2mod ModbusSerial Slave");
@@ -68,26 +107,39 @@ public class SerialSlaveTest {
 			 * device.
 			 */
 			spi = new SimpleProcessImage();
-			spi.addDigitalOut(new SimpleDigitalOut(true));
-			spi.addDigitalOut(new SimpleDigitalOut(false));
-			spi.addDigitalIn(new SimpleDigitalIn(false));
-			spi.addDigitalIn(new SimpleDigitalIn(true));
-			spi.addDigitalIn(new SimpleDigitalIn(false));
-			spi.addDigitalIn(new SimpleDigitalIn(true));
 			
-			spi.addRegister(new SimpleRegister(251));
-			spi.addInputRegister(new SimpleInputRegister(45));
+			for (int i = 0;i < coils;i++)
+				spi.addDigitalOut(new SimpleDigitalOut(i % 2 == 0));
+
+			for (int i = 0;i < discretes;i++)
+				spi.addDigitalIn(new SimpleDigitalIn(i % 2 == 0));
+			
+			if (hasHoldings) {
+				System.out.println("Adding " + holdings + " holding registers");
+				
+				for (int i = 0;i < holdings;i++)
+					spi.addRegister(new SimpleRegister(i));
+			} else
+				spi.addRegister(new SimpleRegister(251));
+			
+			if (hasInputs) {
+				System.out.println("Adding " + inputs + " input registers");
+				
+				for (int i = 0;i < inputs;i++)
+					spi.addInputRegister(new SimpleInputRegister(i));
+			} else			
+				spi.addInputRegister(new SimpleInputRegister(45));
 
 			// 2. Create the coupler and set the slave identity
 			ModbusCoupler.getReference().setProcessImage(spi);
 			ModbusCoupler.getReference().setMaster(false);
-			ModbusCoupler.getReference().setUnitID(2);
+			ModbusCoupler.getReference().setUnitID(unit);
 
 			// 3. Set up serial parameters
 			SerialParameters params = new SerialParameters();
 			
 			params.setPortName(portname);
-			params.setBaudRate(9600);
+			params.setBaudRate(19200);
 			params.setDatabits(8);
 			params.setParity("None");
 			params.setStopbits(1);

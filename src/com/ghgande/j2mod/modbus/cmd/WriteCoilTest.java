@@ -34,6 +34,7 @@
 package com.ghgande.j2mod.modbus.cmd;
 
 import com.ghgande.j2mod.modbus.Modbus;
+import com.ghgande.j2mod.modbus.io.ModbusSerialTransport;
 import com.ghgande.j2mod.modbus.io.ModbusTransaction;
 import com.ghgande.j2mod.modbus.io.ModbusTransport;
 import com.ghgande.j2mod.modbus.msg.WriteCoilRequest;
@@ -91,9 +92,22 @@ public class WriteCoilTest {
 		try {
 			try {
 				transport = ModbusMasterFactory.createModbusMaster(args[0]);
+				
+				if (transport instanceof ModbusSerialTransport) {
+					((ModbusSerialTransport) transport).setReceiveTimeout(500);
+					((ModbusSerialTransport) transport).setBaudRate(19200);
+				}
+								
+				/*
+				 * There are a number of devices which won't initialize immediately
+				 * after being opened.  Take a moment to let them come up.
+				 */
+				Thread.sleep(2000);
+				
 				unit = Integer.parseInt(args[1]);
 				ref = Integer.parseInt(args[2]);
 				value = "true".equals(args[3]);
+				
 				if (args.length == 5) {
 					repeat = Integer.parseInt(args[4]);
 				}
@@ -131,5 +145,7 @@ public class WriteCoilTest {
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
+		
+		System.exit(0);
 	}
 }

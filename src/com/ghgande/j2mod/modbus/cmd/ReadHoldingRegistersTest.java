@@ -73,6 +73,7 @@ import com.ghgande.j2mod.modbus.Modbus;
 import com.ghgande.j2mod.modbus.ModbusException;
 import com.ghgande.j2mod.modbus.io.ModbusRTUTransport;
 import com.ghgande.j2mod.modbus.io.ModbusSerialTransaction;
+import com.ghgande.j2mod.modbus.io.ModbusSerialTransport;
 import com.ghgande.j2mod.modbus.io.ModbusTCPTransport;
 import com.ghgande.j2mod.modbus.io.ModbusTransaction;
 import com.ghgande.j2mod.modbus.io.ModbusTransport;
@@ -135,10 +136,23 @@ public class ReadHoldingRegistersTest {
 			try {
 				// 2. Open the connection.
 				transport = ModbusMasterFactory.createModbusMaster(args[0]);
+				
 				if (transport == null) {
 					System.err.println("Cannot open " + args[0]);
 					System.exit(1);
 				}
+				
+				if (transport instanceof ModbusSerialTransport) {
+					((ModbusSerialTransport) transport).setReceiveTimeout(500);
+					((ModbusSerialTransport) transport).setBaudRate(19200);
+				}
+								
+				/*
+				 * There are a number of devices which won't initialize immediately
+				 * after being opened.  Take a moment to let them come up.
+				 */
+				Thread.sleep(2000);
+				
 				ref = Integer.parseInt(args[1]);
 				count = Integer.parseInt(args[2]);
 

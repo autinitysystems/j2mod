@@ -34,19 +34,17 @@
 package com.ghgande.j2mod.modbus.cmd;
 
 import java.io.IOException;
-import java.net.InetAddress;
 
 import com.ghgande.j2mod.modbus.Modbus;
 import com.ghgande.j2mod.modbus.io.ModbusRTUTransport;
 import com.ghgande.j2mod.modbus.io.ModbusSerialTransaction;
-import com.ghgande.j2mod.modbus.io.ModbusTCPTransaction;
+import com.ghgande.j2mod.modbus.io.ModbusSerialTransport;
 import com.ghgande.j2mod.modbus.io.ModbusTCPTransport;
 import com.ghgande.j2mod.modbus.io.ModbusTransaction;
 import com.ghgande.j2mod.modbus.io.ModbusTransport;
 import com.ghgande.j2mod.modbus.msg.ModbusRequest;
 import com.ghgande.j2mod.modbus.msg.WriteSingleRegisterRequest;
 import com.ghgande.j2mod.modbus.net.ModbusMasterFactory;
-import com.ghgande.j2mod.modbus.net.TCPMasterConnection;
 import com.ghgande.j2mod.modbus.procimg.SimpleRegister;
 
 /**
@@ -100,6 +98,17 @@ public class WriteHoldingRegisterTest {
 		try {
 			try {
 				transport = ModbusMasterFactory.createModbusMaster(args[0]);
+				
+				if (transport instanceof ModbusSerialTransport) {
+					((ModbusSerialTransport) transport).setReceiveTimeout(500);
+					((ModbusSerialTransport) transport).setBaudRate(19200);
+					
+					/*
+					 * Some serial devices are slow to wake up.
+					 */
+					Thread.sleep(2000);
+				}
+								
 				ref = Integer.parseInt(args[1]);
 				value = Integer.parseInt(args[2]);
 
@@ -157,5 +166,6 @@ public class WriteHoldingRegisterTest {
 				// Do nothing.
 			}
 		}
+		System.exit(0);
 	}
 }
