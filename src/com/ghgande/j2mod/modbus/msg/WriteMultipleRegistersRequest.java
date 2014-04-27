@@ -33,7 +33,7 @@
  ***/
 /**
  *  * Java Modbus Library 2 (j2mod)
- * Copyright (c) 2010-2012, greenHouse Gas and Electric
+ * Copyright (c) 2010-2014, greenHouse Gas and Electric
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -84,37 +84,14 @@ import com.ghgande.j2mod.modbus.procimg.*;
  * @version 1.2rc1 (09/11/2004)
  * 
  * @author jfhaugh
- * @version @version@ (@date@)
+ * @version 1.05
+ * 
+ *          20140426 - Refactor and minor bug fix.
  */
 public final class WriteMultipleRegistersRequest extends ModbusRequest {
-
 	private int m_Reference;
 	private Register[] m_Registers;
 	private NonWordDataHandler m_NonWordDataHandler = null;
-
-	/**
-	 * Constructs a new <tt>WriteMultipleRegistersRequest</tt> instance.
-	 */
-	public WriteMultipleRegistersRequest() {
-		setFunctionCode(Modbus.WRITE_MULTIPLE_REGISTERS);
-	}
-
-	/**
-	 * Constructs a new <tt>WriteMultipleRegistersRequest</tt> instance with a
-	 * given starting reference and values to be written.
-	 * <p>
-	 * 
-	 * @param first
-	 *            -- the address of the first register to write to.
-	 * @param registers
-	 *            -- the registers to be written.
-	 */
-	public WriteMultipleRegistersRequest(int first, Register[] registers) {
-		setFunctionCode(Modbus.WRITE_MULTIPLE_REGISTERS);
-
-		setReference(first);
-		setRegisters(registers);
-	}
 
 	public ModbusResponse getResponse() {
 		WriteMultipleRegistersResponse response = new WriteMultipleRegistersResponse();
@@ -131,10 +108,23 @@ public final class WriteMultipleRegistersRequest extends ModbusRequest {
 	}
 
 	/**
-	 * createResponse() must be able to handle the case where the word data that
-	 * is in the response is actually non-word data. That is, where the slave
-	 * device has data which are not actually <tt>short</tt> values in the range
-	 * of registers being processed.
+	 * createResponse - Returns the <tt>WriteMultipleRegistersResponse</tt> that
+	 * represents the answer to this <tt>WriteMultipleRegistersRequest</tt>.
+	 * 
+	 * The implementation should take care about assembling the reply to this
+	 * <tt>WriteMultipleRegistersRequest</tt>.
+	 * 
+	 * This method is used to create responses from the process image associated
+	 * with the <tt>ModbusCoupler</tt>. It is commonly used to implement Modbus
+	 * slave instances.
+	 * 
+	 * @returns the corresponding ModbusResponse.
+	 *          <p>
+	 * 
+	 *          createResponse() must be able to handle the case where the word
+	 *          data that is in the response is actually non-word data. That is,
+	 *          where the slave device has data which are not actually
+	 *          <tt>short</tt> values in the range of registers being processed.
 	 */
 	public ModbusResponse createResponse() {
 		WriteMultipleRegistersResponse response = null;
@@ -142,28 +132,27 @@ public final class WriteMultipleRegistersRequest extends ModbusRequest {
 		if (m_NonWordDataHandler == null) {
 			Register[] regs = null;
 			// 1. get process image
-			ProcessImage procimg = ModbusCoupler.getReference()
-					.getProcessImage();
+			ProcessImage procimg = ModbusCoupler.getReference().getProcessImage();
 			// 2. get registers
 			try {
 				regs = procimg.getRegisterRange(getReference(), getWordCount());
 				// 3. set Register values
 				for (int i = 0; i < regs.length; i++)
-					regs[i].setValue(this.getRegister(i).toBytes());
+					regs[i].setValue(this.getRegister(i).getValue());
 			} catch (IllegalAddressException iaex) {
 				return createExceptionResponse(Modbus.ILLEGAL_ADDRESS_EXCEPTION);
 			}
 			response = (WriteMultipleRegistersResponse) getResponse();
-			
+
 			response.setReference(getReference());
 			response.setWordCount(getWordCount());
 		} else {
 			int result = m_NonWordDataHandler.commitUpdate();
-			if (result > 0) {
+			if (result > 0)
 				return createExceptionResponse(result);
-			}
+
 			response = (WriteMultipleRegistersResponse) getResponse();
-			
+
 			response.setReference(getReference());
 			response.setWordCount(m_NonWordDataHandler.getWordCount());
 		}
@@ -172,12 +161,12 @@ public final class WriteMultipleRegistersRequest extends ModbusRequest {
 	}
 
 	/**
-	 * Sets the reference of the register to writing to with this
+	 * setReference - Sets the reference of the register to write to with this
 	 * <tt>WriteMultipleRegistersRequest</tt>.
 	 * <p>
 	 * 
 	 * @param ref
-	 *            the reference of the register to start writing to as
+	 *            the reference of the register to start writing to as an
 	 *            <tt>int</tt>.
 	 */
 	public void setReference(int ref) {
@@ -185,8 +174,8 @@ public final class WriteMultipleRegistersRequest extends ModbusRequest {
 	}
 
 	/**
-	 * Returns the reference of the register to start writing to with this
-	 * <tt>WriteMultipleRegistersRequest</tt>.
+	 * setReference - Returns the reference of the register to start writing to
+	 * with this <tt>WriteMultipleRegistersRequest</tt>.
 	 * <p>
 	 * 
 	 * @return the reference of the register to start writing to as <tt>int</tt>
@@ -197,7 +186,7 @@ public final class WriteMultipleRegistersRequest extends ModbusRequest {
 	}
 
 	/**
-	 * Sets the registers to be written with this
+	 * setRegisters - Sets the registers to be written with this
 	 * <tt>WriteMultipleRegistersRequest</tt>.
 	 * <p>
 	 * 
@@ -209,7 +198,7 @@ public final class WriteMultipleRegistersRequest extends ModbusRequest {
 	}
 
 	/**
-	 * Returns the registers to be written with this
+	 * getRegisters - Returns the registers to be written with this
 	 * <tt>WriteMultipleRegistersRequest</tt>.
 	 * <p>
 	 * 
@@ -220,8 +209,7 @@ public final class WriteMultipleRegistersRequest extends ModbusRequest {
 	}
 
 	/**
-	 * Returns the <tt>Register</tt> at the given position (relative to the
-	 * reference used in the request).
+	 * getRegister - Returns the <tt>Register</tt> at the given position.
 	 * 
 	 * @param index
 	 *            the relative index of the <tt>Register</tt>.
@@ -238,19 +226,17 @@ public final class WriteMultipleRegistersRequest extends ModbusRequest {
 		if (index >= getWordCount())
 			throw new IndexOutOfBoundsException(index + " > " + getWordCount());
 
-			return m_Registers[index];
+		return m_Registers[index];
 	}
 
 	/**
-	 * Returns the value of the register at the given position (relative to the
-	 * reference used in the request) interpreted as unsigned short.
+	 * getRegisterValue - Returns the value of the specified register.
 	 * <p>
 	 * 
 	 * @param index
-	 *            the relative index of the register for which the value should
-	 *            be retrieved.
+	 *            the index of the desired register.
 	 * 
-	 * @return the value as <tt>int</tt>.
+	 * @return the value as an <tt>int</tt>.
 	 * 
 	 * @throws IndexOutOfBoundsException
 	 *             if the index is out of bounds.
@@ -260,7 +246,8 @@ public final class WriteMultipleRegistersRequest extends ModbusRequest {
 	}
 
 	/**
-	 * Returns the number of bytes representing the values to be written.
+	 * getByteCount - Returns the number of bytes representing the values to be
+	 * written.
 	 * <p>
 	 * 
 	 * @return the number of bytes to be written as <tt>int</tt>.
@@ -270,7 +257,7 @@ public final class WriteMultipleRegistersRequest extends ModbusRequest {
 	}
 
 	/**
-	 * Returns the number of words to be written.
+	 * getWordCount - Returns the number of words to be written.
 	 * 
 	 * @return the number of words to be written as <tt>int</tt>.
 	 */
@@ -282,9 +269,9 @@ public final class WriteMultipleRegistersRequest extends ModbusRequest {
 	}
 
 	/**
-	 * Sets a non word data handler.  A non-word data handler is responsible
-	 * for converting words from a Modbus packet into the non-word values
-	 * associated with the actual device's registers.
+	 * setNonWordHandler - Sets a non word data handler. A non-word data handler
+	 * is responsible for converting words from a Modbus packet into the
+	 * non-word values associated with the actual device's registers.
 	 * 
 	 * @param dhandler
 	 *            a <tt>NonWordDataHandler</tt> instance.
@@ -294,13 +281,13 @@ public final class WriteMultipleRegistersRequest extends ModbusRequest {
 	}
 
 	/**
-	 * Returns the actual non word data handler.
+	 * getNonWordDataHandler - Returns the actual non word data handler.
 	 * 
 	 * @return the actual <tt>NonWordDataHandler</tt>.
 	 */
 	public NonWordDataHandler getNonWordDataHandler() {
 		return m_NonWordDataHandler;
-	}// getNonWordDataHandler
+	}
 
 	public void writeData(DataOutput output) throws IOException {
 		byte data[] = getMessage();
@@ -367,5 +354,29 @@ public final class WriteMultipleRegistersRequest extends ModbusRequest {
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * Constructs a new <tt>WriteMultipleRegistersRequest</tt> instance with a
+	 * given starting reference and values to be written.
+	 * <p>
+	 * 
+	 * @param first
+	 *            -- the address of the first register to write to.
+	 * @param registers
+	 *            -- the registers to be written.
+	 */
+	public WriteMultipleRegistersRequest(int first, Register[] registers) {
+		setFunctionCode(Modbus.WRITE_MULTIPLE_REGISTERS);
+
+		setReference(first);
+		setRegisters(registers);
+	}
+
+	/**
+	 * Constructs a new <tt>WriteMultipleRegistersRequest</tt> instance.
+	 */
+	public WriteMultipleRegistersRequest() {
+		setFunctionCode(Modbus.WRITE_MULTIPLE_REGISTERS);
 	}
 }
