@@ -182,7 +182,7 @@ public final class MaskWriteRegisterRequest extends ModbusRequest {
 			 */
 			int value = register.getValue();
 			
-			value = (value & m_AndMask) | m_OrMask;
+			value = (value & m_AndMask) | (m_OrMask & ~m_AndMask);
 			
 			/*
 			 * Store the modified value back where it came from.
