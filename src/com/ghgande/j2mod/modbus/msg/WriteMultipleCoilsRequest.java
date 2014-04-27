@@ -49,72 +49,21 @@ import com.ghgande.j2mod.modbus.util.BitVector;
  * directly correlates with the class 1 function <i>write multiple coils (FC
  * 15)</i>. It encapsulates the corresponding request message.
  * <p/>
- * Coils are understood as bits that can be manipulated (i.e. set or unset).
+ * Coils are understood as bits that can be manipulated (i.e. set or cleared).
  * 
  * @author Dieter Wimberger
  * @version 1.2rc1 (09/11/2004)
+ * 
+ * @author Julie Haugh
+ * @version 1.05
+ * 
+ *          20140426 - Refactor and exploit the new response methods.<br>
  */
 public final class WriteMultipleCoilsRequest extends ModbusRequest {
 
 	// instance attributes
 	private int m_Reference;
 	private BitVector m_Coils;
-
-	/**
-	 * Constructs a new <tt>ReadCoilsRequest</tt> instance.
-	 * 
-	 * <p>
-	 * A minimal message contains the reference to the first coil as a
-	 * <tt>short</tt>, the number of coils as a <tt>short</tt>, and not less
-	 * than one <tt>byte</tt> of coil data.
-	 */
-	public WriteMultipleCoilsRequest() {
-		super();
-
-		setFunctionCode(Modbus.WRITE_MULTIPLE_COILS);
-		setDataLength(5);
-
-		m_Coils = new BitVector(1);
-	}
-
-	/**
-	 * Constructs a new <tt>WriteMultipleCoilsRequest</tt> instance with a given
-	 * reference and count of coils (i.e. bits) to be written, followed by the
-	 * actual byte count, and then the byte count number of bytes.
-	 * 
-	 * @param ref
-	 *            the index of the first coil to be written.
-	 * @param count
-	 *            the number of coils to be written.
-	 */
-	public WriteMultipleCoilsRequest(int ref, int count) {
-		super();
-
-		setFunctionCode(Modbus.WRITE_MULTIPLE_COILS);
-		setDataLength((count + 7) / 8 + 5);
-
-		setReference(ref);
-		m_Coils = new BitVector(count);
-	}
-
-	/**
-	 * Constructs a new <tt>WriteMultipleCoilsRequest</tt> instance with given
-	 * reference and coil status.
-	 * 
-	 * @param ref
-	 *            the index of the first coil to be written.
-	 * @param bv
-	 *            the coils to be written.
-	 */
-	public WriteMultipleCoilsRequest(int ref, BitVector bv) {
-		super();
-
-		setFunctionCode(Modbus.WRITE_MULTIPLE_COILS);
-		setDataLength(bv.byteSize() + 5);
-
-		setReference(ref);
-		m_Coils = bv;
-	}
 
 	public ModbusResponse getResponse() {
 		WriteMultipleCoilsResponse response = new WriteMultipleCoilsResponse();
@@ -148,36 +97,38 @@ public final class WriteMultipleCoilsRequest extends ModbusRequest {
 		}
 		response = (WriteMultipleCoilsResponse) getResponse();
 
+		response.setBitCount(m_Coils.size());
+		response.setReference(m_Reference);
+
 		return response;
 	}
 
 	/**
-	 * Sets the reference of the register to start reading from with this
-	 * <tt>ReadCoilsRequest</tt>.
+	 * setReference - Sets the reference of the coil to start writing to with
+	 * this <tt>WriteMultipleCoilsRequest</tt>.
 	 * <p/>
 	 * 
 	 * @param ref
-	 *            the reference of the register to start reading from.
+	 *            the reference of the coil to start writing to.
 	 */
 	public void setReference(int ref) {
 		m_Reference = ref;
 	}
 
 	/**
-	 * Returns the reference of the register to to start reading from with this
-	 * <tt>ReadCoilsRequest</tt>.
+	 * getReference - Returns the reference of the coil to to start writing to
+	 * with this <tt>WriteMultipleCoilsRequest</tt>.
 	 * 
-	 * @return the reference of the register to start reading from as
-	 *         <tt>int</tt>.
+	 * @return the reference of the coil to start writing to as an <tt>int</tt>.
 	 */
 	public int getReference() {
 		return m_Reference;
 	}
 
 	/**
-	 * Returns the number of bits (i.e. input discretes) read with the request.
+	 * getBitCount - Returns the number of coils written with the request.
 	 * 
-	 * @return the number of bits that have been read.
+	 * @return the number of coils that have been written.
 	 */
 	public int getBitCount() {
 		if (m_Coils == null)
@@ -187,16 +138,17 @@ public final class WriteMultipleCoilsRequest extends ModbusRequest {
 	}
 
 	/**
-	 * Returns the number of bytes required for packing the coil bits.
+	 * getByteCount - Returns the number of bytes required for packing the
+	 * coils.
 	 * 
-	 * @return the number of bytes required for packing the coil bits.
+	 * @return the number of bytes required for packing the coils.
 	 */
 	public int getByteCount() {
 		return m_Coils.byteSize();
 	}
 
 	/**
-	 * Returns the status of the given coil.
+	 * getCoilStatus - Returns the status of the specified coil.
 	 * 
 	 * @param index
 	 *            the index of the coil to be tested.
@@ -209,7 +161,7 @@ public final class WriteMultipleCoilsRequest extends ModbusRequest {
 	}
 
 	/**
-	 * Sets the coil status of the given coil.
+	 * setCoilStatus - Sets the status of the specified coil.
 	 * 
 	 * @param index
 	 *            the index of the coil to be set/reset.
@@ -224,16 +176,18 @@ public final class WriteMultipleCoilsRequest extends ModbusRequest {
 	}
 
 	/**
-	 * Returns the <tt>BitVector</tt> instance holding coil status information.
+	 * getCoils - Returns the <tt>BitVector</tt> instance holding coil status
+	 * information.
 	 * 
-	 * @return the coils status as <tt>BitVector</tt> instance.
+	 * @return the coils status as a <tt>BitVector</tt> instance.
 	 */
 	public BitVector getCoils() {
 		return m_Coils;
 	}
 
 	/**
-	 * Sets the <tt>BitVector</tt> instance holding coil status information.
+	 * setCoils - Sets the <tt>BitVector</tt> instance holding coil status
+	 * information.
 	 * 
 	 * @param bv
 	 *            a <tt>BitVector</tt> instance holding coil status info.
@@ -253,17 +207,17 @@ public final class WriteMultipleCoilsRequest extends ModbusRequest {
 	public void readData(DataInput din) throws IOException {
 		m_Reference = din.readUnsignedShort();
 		int bitcount = din.readUnsignedShort();
-		int count = din.readUnsignedByte();
-		byte[] data = new byte[count];
+		int coilBytes = din.readUnsignedByte();
+		byte[] data = new byte[coilBytes];
 
-		for (int k = 0; k < count; k++)
+		for (int k = 0; k < coilBytes; k++)
 			data[k] = din.readByte();
 
-		// decode bytes into bitvector, sets data and bitcount
+		// decode bytes into BitCector, sets data and bitcount
 		m_Coils = BitVector.createBitVector(data, bitcount);
 
 		// update data length
-		setDataLength(count + 5);
+		setDataLength(coilBytes + 5);
 	}
 
 	public byte[] getMessage() {
@@ -281,5 +235,61 @@ public final class WriteMultipleCoilsRequest extends ModbusRequest {
 		System.arraycopy(m_Coils.getBytes(), 0, result, 5, m_Coils.byteSize());
 
 		return result;
+	}
+
+	/**
+	 * Constructs a new <tt>WriteMultipleCoilsRequest</tt> instance with the
+	 * given reference and coil values.
+	 * 
+	 * @param ref
+	 *            the index of the first coil to be written.
+	 * @param bv
+	 *            the coil values to be written.
+	 */
+	public WriteMultipleCoilsRequest(int ref, BitVector bv) {
+		super();
+
+		setFunctionCode(Modbus.WRITE_MULTIPLE_COILS);
+		setDataLength(bv.byteSize() + 5);
+
+		setReference(ref);
+		m_Coils = bv;
+	}
+
+	/**
+	 * Constructs a new <tt>WriteMultipleCoilsRequest</tt> instance with a given
+	 * reference and count of coils to be written, followed by the actual byte
+	 * count, and then <i>count<i> number of bytes.
+	 * 
+	 * @param ref
+	 *            the index of the first coil to be written.
+	 * @param count
+	 *            the number of coils to be written.
+	 */
+	public WriteMultipleCoilsRequest(int ref, int count) {
+		super();
+
+		setFunctionCode(Modbus.WRITE_MULTIPLE_COILS);
+		setDataLength((count + 7) / 8 + 5);
+
+		setReference(ref);
+		m_Coils = new BitVector(count);
+	}
+
+	/**
+	 * Constructs a new <tt>WriteMultipleCoilsRequest</tt> instance.
+	 * 
+	 * <p>
+	 * A minimal message contains the reference to the first coil as a
+	 * <tt>short</tt>, the number of coils as a <tt>short</tt>, and not less
+	 * than one <tt>byte</tt> of coil data.
+	 */
+	public WriteMultipleCoilsRequest() {
+		super();
+
+		setFunctionCode(Modbus.WRITE_MULTIPLE_COILS);
+		setDataLength(5);
+
+		m_Coils = new BitVector(1);
 	}
 }
