@@ -248,6 +248,13 @@ public interface Modbus {
   public static final int SLAVE_DEVICE_FAILURE = 4;
   
   /**
+   * Defines the Modbus slave exception type <tt>slave busy</tt>.  This
+   * exception indicates the the slave is unable to perform the operation
+   * because it is performing an operation which cannot be interrupted.
+   */
+  public static final int SLAVE_BUSY_EXCEPTION = 6;
+  
+  /**
    * Defines the Modbus slave exception type <tt>negative acknowledgment</tt>.
    * This exception code indicates the slave cannot perform the requested
    * action.
