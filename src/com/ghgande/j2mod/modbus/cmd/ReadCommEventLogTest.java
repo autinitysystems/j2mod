@@ -136,7 +136,10 @@ public class ReadCommEventLogTest {
 				
 				if (transport instanceof ModbusSerialTransport) {
 					((ModbusSerialTransport) transport).setReceiveTimeout(500);
-					((ModbusSerialTransport) transport).setBaudRate(19200);
+					if (System.getProperty("com.ghgande.j2mod.modbus.baud") != null)
+						((ModbusSerialTransport) transport).setBaudRate(Integer.parseInt(System.getProperty("com.ghgande.j2mod.modbus.baud")));
+					else
+						((ModbusSerialTransport) transport).setBaudRate(19200);
 				}
 								
 				/*

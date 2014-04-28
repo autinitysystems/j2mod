@@ -314,6 +314,13 @@ public class ModbusRTUTransport extends ModbusSerialTransport {
 							if (Modbus.debug)
 								System.err.println("CRC should be " + crc[0]
 										+ ", " + crc[1]);
+							
+							/*
+							 * Drain the input in case the frame was misread and more
+							 * was to follow.
+							 */
+							clearInput();
+							
 							throw new IOException(
 									"CRC Error in received frame: "
 											+ dlength
