@@ -74,6 +74,7 @@ import com.ghgande.j2mod.modbus.ModbusException;
 import com.ghgande.j2mod.modbus.io.ModbusRTUTransport;
 import com.ghgande.j2mod.modbus.io.ModbusSerialTransaction;
 import com.ghgande.j2mod.modbus.io.ModbusSerialTransport;
+import com.ghgande.j2mod.modbus.io.ModbusTCPTransaction;
 import com.ghgande.j2mod.modbus.io.ModbusTCPTransport;
 import com.ghgande.j2mod.modbus.io.ModbusTransaction;
 import com.ghgande.j2mod.modbus.io.ModbusTransport;
@@ -179,8 +180,9 @@ public class ReadInputRegistersTest {
 			// 5. Execute the transaction repeat times
 
 			for (int k = 0;k < repeat;k++) {
-System.err.println("try " + k);
-			// 3. Create the command.
+				System.err.println("Request " + k);
+				
+				// 3. Create the command.
 				req = new ReadInputRegistersRequest(ref, count);
 				req.setUnitID(unit);
 				
@@ -199,6 +201,10 @@ System.err.println("try " + k);
 					 */
 					((ModbusSerialTransaction) trans).setTransDelayMS(10);
 				}
+				
+				if (trans instanceof ModbusTCPTransaction) {
+					((ModbusTCPTransaction) trans).setReconnecting(true);
+				}
 
 				try {
 					trans.execute();
@@ -214,6 +220,10 @@ System.err.println("try " + k);
 					else
 						System.err.println("No response to READ INPUT request.");
 				}
+				
+				if (res == null)
+					continue;
+				
 				if (res instanceof ExceptionResponse) {
 					ExceptionResponse exception = (ExceptionResponse) res;
 					System.out.println(exception);
