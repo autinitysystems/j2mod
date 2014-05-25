@@ -139,7 +139,8 @@ public class WriteCoilTest {
 							+ trans.getResponse().getHexMessage());
 				
 				WriteCoilResponse data = (WriteCoilResponse) trans.getResponse();
-				System.out.println("Coil = " + data.getCoil());
+				if (data != null)
+					System.out.println("Coil = " + data.getCoil());
 			}
 
 			// 6. Close the connection
