@@ -260,6 +260,13 @@ public interface Modbus {
    * action.
    */
   public static final int NEGATIVE_ACKNOWLEDGEMENT = 7;
+  
+  /**
+   * Defines the Modbus slave exception type <tt>Gateway target failed to
+   * respond</tt>.  This exception code indicates that a Modbus gateway
+   * failed to receive a response from the specified target.
+   */
+  public static final int GATEWAY_TARGET_NO_RESPONSE = 11;
 
 
   /**
