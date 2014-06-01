@@ -127,9 +127,13 @@ public class MaskWriteRegisterTest {
 			for (int count = 0; count < repeat; count++) {
 				trans.execute();
 
-				if (Modbus.debug)
-					System.out.println("Response: "
+				if (Modbus.debug) {
+					if (trans.getResponse() != null)
+						System.out.println("Response: "
 							+ trans.getResponse().getHexMessage());
+					else
+						System.out.println("No response.");
+				}
 			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
