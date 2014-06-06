@@ -36,6 +36,7 @@ package com.ghgande.j2mod.modbus.io;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.util.Arrays;
 
 import com.ghgande.j2mod.modbus.Modbus;
 import com.ghgande.j2mod.modbus.ModbusIOException;
@@ -80,9 +81,12 @@ public class ModbusUDPTransport
       throws ModbusIOException {
     try {
       synchronized (m_ByteOut) {
-        m_ByteOut.reset();
-        msg.writeTo((DataOutput) m_ByteOut);
-        m_Terminal.sendMessage(m_ByteOut.getBuffer());
+    	  int len = msg.getOutputLength();
+    	  m_ByteOut.reset();
+    	  msg.writeTo((DataOutput) m_ByteOut);
+    	  byte data[] = m_ByteOut.getBuffer();
+    	  data = Arrays.copyOf(data, len);
+    	  m_Terminal.sendMessage(data);
       }
     } catch (Exception ex) {
       throw new ModbusIOException("I/O exception - failed to write.");
