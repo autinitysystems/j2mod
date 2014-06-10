@@ -34,7 +34,6 @@
 package com.ghgande.j2mod.modbus.cmd;
 
 import java.io.IOException;
-import java.net.InetAddress;
 
 import com.ghgande.j2mod.modbus.Modbus;
 import com.ghgande.j2mod.modbus.io.ModbusTransaction;
