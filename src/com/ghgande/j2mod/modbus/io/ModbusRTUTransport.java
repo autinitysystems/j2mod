@@ -137,6 +137,11 @@ public class ModbusRTUTransport extends ModbusSerialTransport {
 			}
 		}
 	
+		/*
+		 * Windows may have an issue when reading more than 16 bytes at
+		 * a time.  The receive threshold will need to be changed as the
+		 * number of remaining bytes declines.
+		 */
 		if (!osIsWindows)
 			setReceiveThreshold(remaining);
 		else
@@ -154,12 +159,19 @@ public class ModbusRTUTransport extends ModbusSerialTransport {
 				read += readCount;
 				remaining -= readCount;
 				loopCount = 0;
+				
+				/*
+				 * Determine if the remaining bytes to read is now below
+				 * 16 for a Windows machine.
+				 */
+				if (osIsWindows && remaining > 0 && remaining < 16)
+					setReceiveThreshold(remaining);
 			}
 			if (readCount == 0
 					&& System.currentTimeMillis() > timedOut)
 				break;
 
-			if (remaining > 0)
+			if (remaining > 0 && ! (osIsWindows && readCount == 16))
 				Thread.yield();
 		}
 		if (Modbus.debug && remaining > 0) {
