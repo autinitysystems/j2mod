@@ -106,31 +106,6 @@ public class ModbusUDPTransport
         req.readFrom(m_ByteIn);
       }
       return req;
-
-      /*
-      new BytesInputStream(m_Terminal.receiveMessage());
-      DataInputStream in = new DataInputStream(
-          new ByteArrayInputStream(m_Terminal.receiveMessage())
-      );
-      //Timeout? Infinite could be problematic
-      int transactionID = in.readShort();
-      int protocolID = in.readShort();
-      int dataLength = in.readShort();
-      if (protocolID != Modbus.DEFAULT_PROTOCOL_ID || dataLength > 256) {
-        throw new ModbusIOException();
-      }
-      int unitID = in.readUnsignedByte();
-      int functionCode = in.readUnsignedByte();
-      ModbusRequest request =
-          ModbusRequest.createModbusRequest(functionCode, in, false);
-
-      //set read parameters
-      request.setTransactionID(transactionID);
-      request.setProtocolID(protocolID);
-      request.setUnitID(unitID);
-      request.setDataLength(dataLength - 2);
-      return request;
-      */
     } catch (Exception ex) {
       throw new ModbusIOException("I/O exception - failed to read.");
     }
@@ -150,26 +125,6 @@ public class ModbusUDPTransport
         res.readFrom(m_ByteIn);
       }
       return res;
-
-
-      /*
-      DataInputStream in = new DataInputStream(
-          new ByteArrayInputStream(m_Terminal.receiveMessage())
-      );
-      int transactionID = in.readShort();
-      int protocolID = in.readShort();
-      int dataLength = in.readShort();
-      int unitID = in.readUnsignedByte();
-      int functionCode = in.readUnsignedByte();
-      ModbusResponse response =
-          ModbusResponse.createModbusResponse(functionCode, in, false);
-
-      //set read parameters
-      response.setTransactionID(transactionID);
-      response.setProtocolID(protocolID);
-      response.setUnitID(unitID);
-      return response;
-      */
     } catch (InterruptedIOException ioex) {
       throw new ModbusIOException("Socket timed out.");
     } catch (Exception ex) {

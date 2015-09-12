@@ -134,7 +134,7 @@ public class ModbusUDPTransaction
   }//getResponse
 
   public int getTransactionID() {
-    return c_TransactionID;
+    return c_TransactionID & 0x0000FFFF;
   }//getTransactionID
 
   public void setCheckingValidity(boolean b) {
@@ -204,7 +204,7 @@ ex.printStackTrace();
     }
 
     //toggle the id
-    toggleTransactionID();
+    incrementTransactionID();
   }//execute
 
   /**
@@ -246,15 +246,14 @@ ex.printStackTrace();
    * When the maximum value of 65535 has been reached,
    * the identifiers will start from zero again.
    */
-  private void toggleTransactionID() {
-    if (isCheckingValidity()) {
-      if (c_TransactionID == Modbus.MAX_TRANSACTION_ID) {
-        c_TransactionID = 0;
-      } else {
-        c_TransactionID++;
-      }
-    }
-    m_Request.setTransactionID(getTransactionID());
-  }//toggleTransactionID
-
+	private void incrementTransactionID() {
+		if (isCheckingValidity()) {
+			if (c_TransactionID >= Modbus.MAX_TRANSACTION_ID) {
+				c_TransactionID = 1;
+			} else {
+				c_TransactionID++;
+			}
+		}
+		m_Request.setTransactionID(getTransactionID());
+	}
 }//class ModbusUDPTransaction

@@ -132,9 +132,17 @@ public class ModbusTCPTransaction implements ModbusTransaction {
 	 * same time.
 	 */
 	public int getTransactionID() {
-		if (c_TransactionID == 0 && isCheckingValidity())
-			c_TransactionID++;
+		/*
+		 * Ensure that the transaction ID is in the valid range between
+		 * 1 and MAX_TRANSACTION_ID (65534).  If not, the value will be forced
+		 * to 1.
+		 */
+		if (c_TransactionID <= 0 && isCheckingValidity())
+			c_TransactionID = 1;
 
+		if (c_TransactionID >= Modbus.MAX_TRANSACTION_ID)
+			c_TransactionID = 1;
+		
 		return c_TransactionID;
 	}
 
@@ -307,7 +315,7 @@ public class ModbusTCPTransaction implements ModbusTransaction {
 	 */
 	private void incrementTransactionID() {
 		if (isCheckingValidity()) {
-			if (c_TransactionID == Modbus.MAX_TRANSACTION_ID) {
+			if (c_TransactionID >= Modbus.MAX_TRANSACTION_ID) {
 				c_TransactionID = 1;
 			} else {
 				c_TransactionID++;

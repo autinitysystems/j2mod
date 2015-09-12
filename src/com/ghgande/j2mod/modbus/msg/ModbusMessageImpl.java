@@ -84,7 +84,7 @@ public abstract class ModbusMessageImpl implements ModbusMessage {
 	}
 
 	public int getTransactionID() {
-		return m_TransactionID;
+		return m_TransactionID & 0x0000FFFF;
 	}
 
 	/**
@@ -98,7 +98,7 @@ public abstract class ModbusMessageImpl implements ModbusMessage {
 	 *            the transaction identifier as <tt>int</tt>.
 	 */
 	public void setTransactionID(int tid) {
-		m_TransactionID = tid;
+		m_TransactionID = tid & 0x0000FFFF;
 	}
 
 	public int getProtocolID() {

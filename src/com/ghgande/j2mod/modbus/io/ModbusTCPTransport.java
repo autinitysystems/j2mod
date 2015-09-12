@@ -182,7 +182,11 @@ public class ModbusTCPTransport implements ModbusTransport {
 						throw new EOFException(
 								"Premature end of stream (Header truncated).");
 
-					int transaction = ModbusUtil.registerToShort(buffer, 0);
+					/*
+					 * The transaction ID must be treated as an unsigned short in
+					 * order for validation to work correctly.
+					 */
+					int transaction = ModbusUtil.registerToShort(buffer, 0) & 0x0000FFFF;
 					int protocol = ModbusUtil.registerToShort(buffer, 2);
 					int count = ModbusUtil.registerToShort(buffer, 4);
 
@@ -278,7 +282,7 @@ public class ModbusTCPTransport implements ModbusTransport {
 					 * the data that was just read. That's what I need in order
 					 * to read the rest of the response.
 					 */
-					int transaction = ModbusUtil.registerToShort(buffer, 0);
+					int transaction = ModbusUtil.registerToShort(buffer, 0) & 0x0000FFFF;
 					int protocol = ModbusUtil.registerToShort(buffer, 2);
 					int count = ModbusUtil.registerToShort(buffer, 4);
 
