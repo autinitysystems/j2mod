@@ -66,6 +66,14 @@ public interface ProcessImageImplementation extends ProcessImage {
 	public void addDigitalOut(DigitalOut out);
 
 	/**
+	 * Adds a new <tt>DigitalOut</tt> instance at the given reference.
+	 * 
+	 * @param ref - the reference for the instance.
+	 * @param out - the <tt>DigitalOut</tt> instance to be added.
+	 */
+	public void addDigitalOut(int ref, DigitalOut out);
+
+	/**
 	 * Removes a given <tt>DigitalOut</tt> instance.
 	 * 
 	 * @param out
@@ -94,6 +102,15 @@ public interface ProcessImageImplementation extends ProcessImage {
 	 *            the <tt>DigitalIn</tt> instance to be added.
 	 */
 	public void addDigitalIn(DigitalIn di);
+
+	/**
+	 * Adds a new <tt>DigitalIn</tt> instance at the given reference.
+	 * 
+	 * @param ref - the reference for the new instance.
+	 * @param di
+	 *            the <tt>DigitalIn</tt> instance to be added.
+	 */
+	public void addDigitalIn(int ref, DigitalIn di);
 
 	/**
 	 * Removes a given <tt>DigitalIn</tt> instance.
@@ -126,6 +143,15 @@ public interface ProcessImageImplementation extends ProcessImage {
 	public void addInputRegister(InputRegister reg);
 
 	/**
+	 * Adds a new <tt>InputRegister</tt> instance.
+	 * 
+	 * @param ref - The reference for the new instance.
+	 * @param reg
+	 *            the <tt>InputRegister</tt> instance to be added.
+	 */
+	public void addInputRegister(int ref, InputRegister reg);
+
+	/**
 	 * Removes a given <tt>InputRegister</tt> instance.
 	 * 
 	 * @param reg
@@ -154,6 +180,15 @@ public interface ProcessImageImplementation extends ProcessImage {
 	 *            the <tt>Register</tt> instance to be added.
 	 */
 	public void addRegister(Register reg);
+
+	/**
+	 * Adds a new <tt>Register</tt> instance.
+	 * 
+	 * @param ref - the reference for the new instance.
+	 * @param reg
+	 *            the <tt>Register</tt> instance to be added.
+	 */
+	public void addRegister(int ref, Register reg);
 
 	/**
 	 * Removes a given <tt>Register</tt> instance.
@@ -186,6 +221,15 @@ public interface ProcessImageImplementation extends ProcessImage {
 	public void addFile(File reg);
 
 	/**
+	 * Adds a new <tt>File</tt> instance.
+	 * 
+	 * @param ref - the reference for the new isntance.
+	 * @param reg
+	 *            the <tt>File</tt> instance to be added.
+	 */
+	public void addFile(int ref, File reg);
+
+	/**
 	 * Removes a given <tt>File</tt> instance.
 	 * 
 	 * @param reg
@@ -214,6 +258,15 @@ public interface ProcessImageImplementation extends ProcessImage {
 	 *            the <tt>FIFO</tt> instance to be added.
 	 */
 	public void addFIFO(FIFO reg);
+
+	/**
+	 * Adds a new <tt>FIFO</tt> instance.
+	 * 
+	 * @param ref - the reference for the new instance.
+	 * @param reg
+	 *            the <tt>FIFO</tt> instance to be added.
+	 */
+	public void addFIFO(int ref, FIFO reg);
 
 	/**
 	 * Removes a given <tt>FIFO</tt> instance.

@@ -210,7 +210,7 @@ public final class ReadSerialDiagnosticsRequest extends ModbusRequest {
 	 * state or ID information.
 	 */
 	public ModbusResponse createResponse() {
-		throw new RuntimeException();
+		return createExceptionResponse(Modbus.ILLEGAL_FUNCTION_EXCEPTION);
 	}
 
 	/**

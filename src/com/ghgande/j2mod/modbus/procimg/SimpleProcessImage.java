@@ -156,6 +156,22 @@ public class SimpleProcessImage implements ProcessImageImplementation {
 			m_DigitalInputs.addElement(di);
 		}
 	}
+	
+	public void addDigitalIn(int ref, DigitalIn d1) {
+		if (ref < 0 || ref >= 65536)
+			throw new IllegalArgumentException();
+		
+		if (!isLocked()) {
+			synchronized (m_DigitalInputs) {
+				if (ref < m_DigitalInputs.size()) {
+					m_DigitalInputs.setElementAt(d1, ref);
+					return;
+				}
+				m_DigitalInputs.setSize(ref + 1);
+				m_DigitalInputs.setElementAt(d1, ref);
+			}
+		}
+	}
 
 	public void removeDigitalIn(DigitalIn di) {
 		if (!isLocked()) {
@@ -167,6 +183,9 @@ public class SimpleProcessImage implements ProcessImageImplementation {
 			throws IllegalAddressException {
 		if (!isLocked()) {
 			try {
+				if (m_DigitalInputs.get(ref) == null)
+					throw new IllegalAddressException();
+				
 				m_DigitalInputs.setElementAt(di, ref);
 			} catch (IndexOutOfBoundsException ex) {
 				throw new IllegalAddressException();
@@ -176,7 +195,11 @@ public class SimpleProcessImage implements ProcessImageImplementation {
 
 	public DigitalIn getDigitalIn(int ref) throws IllegalAddressException {
 		try {
-			return m_DigitalInputs.elementAt(ref);
+			DigitalIn result = m_DigitalInputs.elementAt(ref);
+			if (result == null)
+				throw new IllegalAddressException();
+			
+			return result;
 		} catch (IndexOutOfBoundsException ex) {
 			throw new IllegalAddressException();
 		}
@@ -205,6 +228,22 @@ public class SimpleProcessImage implements ProcessImageImplementation {
 		}
 	}
 
+	public void addDigitalOut(int ref, DigitalOut dout) {
+		if (ref < 0 || ref >= 65536)
+			throw new IllegalArgumentException();
+		
+		if (!isLocked()) {
+			synchronized (m_DigitalOutputs) {
+				if (ref < m_DigitalOutputs.size()) {
+					m_DigitalOutputs.setElementAt(dout, ref);
+					return;
+				}
+				m_DigitalOutputs.setSize(ref + 1);
+				m_DigitalOutputs.setElementAt(dout, ref);
+			}
+		}
+	}
+
 	public void removeDigitalOut(DigitalOut _do) {
 		if (!isLocked()) {
 			m_DigitalOutputs.removeElement(_do);
@@ -215,6 +254,9 @@ public class SimpleProcessImage implements ProcessImageImplementation {
 			throws IllegalAddressException {
 		if (!isLocked()) {
 			try {
+				if (m_DigitalOutputs.get(ref) == null)
+					throw new IllegalAddressException();
+				
 				m_DigitalOutputs.setElementAt(_do, ref);
 			} catch (IndexOutOfBoundsException ex) {
 				throw new IllegalAddressException();
@@ -224,7 +266,11 @@ public class SimpleProcessImage implements ProcessImageImplementation {
 
 	public DigitalOut getDigitalOut(int ref) throws IllegalAddressException {
 		try {
-			return (DigitalOut) m_DigitalOutputs.elementAt(ref);
+			DigitalOut result = m_DigitalOutputs.elementAt(ref);
+			if (result == null)
+				throw new IllegalAddressException();
+			
+			return result;
 		} catch (IndexOutOfBoundsException ex) {
 			throw new IllegalAddressException();
 		}
@@ -253,6 +299,22 @@ public class SimpleProcessImage implements ProcessImageImplementation {
 		}
 	}
 
+	public void addInputRegister(int ref, InputRegister inReg) {
+		if (ref < 0 || ref >= 65536)
+			throw new IllegalArgumentException();
+		
+		if (!isLocked()) {
+			synchronized (m_InputRegisters) {
+				if (ref < m_InputRegisters.size()) {
+					m_InputRegisters.setElementAt(inReg, ref);
+					return;
+				}
+				m_InputRegisters.setSize(ref + 1);
+				m_InputRegisters.setElementAt(inReg, ref);
+			}
+		}
+	}
+
 	public void removeInputRegister(InputRegister reg) {
 		if (!isLocked()) {
 			m_InputRegisters.removeElement(reg);
@@ -263,6 +325,9 @@ public class SimpleProcessImage implements ProcessImageImplementation {
 			throws IllegalAddressException {
 		if (!isLocked()) {
 			try {
+				if (m_InputRegisters.get(ref) == null)
+					throw new IllegalAddressException();
+				
 				m_InputRegisters.setElementAt(reg, ref);
 			} catch (IndexOutOfBoundsException ex) {
 				throw new IllegalAddressException();
@@ -273,7 +338,11 @@ public class SimpleProcessImage implements ProcessImageImplementation {
 	public InputRegister getInputRegister(int ref)
 			throws IllegalAddressException {
 		try {
-			return m_InputRegisters.elementAt(ref);
+			InputRegister result = m_InputRegisters.elementAt(ref);
+			if (result == null)
+				throw new IllegalAddressException();
+			
+			return result;
 		} catch (IndexOutOfBoundsException ex) {
 			throw new IllegalAddressException();
 		}
@@ -301,6 +370,22 @@ public class SimpleProcessImage implements ProcessImageImplementation {
 		}
 	}
 
+	public void addRegister(int ref, Register reg) {
+		if (ref < 0 || ref >= 65536)
+			throw new IllegalArgumentException();
+		
+		if (!isLocked()) {
+			synchronized (m_Registers) {
+				if (ref < m_Registers.size()) {
+					m_Registers.setElementAt(reg, ref);
+					return;
+				}
+				m_Registers.setSize(ref + 1);
+				m_Registers.setElementAt(reg, ref);
+			}
+		}
+	}
+
 	public void removeRegister(Register reg) {
 		if (!isLocked()) {
 			m_Registers.removeElement(reg);
@@ -311,6 +396,9 @@ public class SimpleProcessImage implements ProcessImageImplementation {
 			throws IllegalAddressException {
 		if (!isLocked()) {
 			try {
+				if (m_Registers.get(ref) == null)
+					throw new IllegalAddressException();
+				
 				m_Registers.setElementAt(reg, ref);
 			} catch (IndexOutOfBoundsException ex) {
 				throw new IllegalAddressException();
@@ -320,7 +408,11 @@ public class SimpleProcessImage implements ProcessImageImplementation {
 
 	public Register getRegister(int ref) throws IllegalAddressException {
 		try {
-			return (Register) m_Registers.elementAt(ref);
+			Register result = (Register) m_Registers.elementAt(ref);
+			if (result == null)
+				throw new IllegalAddressException();
+			
+			return result;
 		} catch (IndexOutOfBoundsException ex) {
 			throw new IllegalAddressException();
 		}
@@ -347,6 +439,22 @@ public class SimpleProcessImage implements ProcessImageImplementation {
 			m_Files.add(newFile);
 	}
 
+	public void addFile(int ref, File newFile) {
+		if (ref < 0 || ref >= 65536)
+			throw new IllegalArgumentException();
+		
+		if (!isLocked()) {
+			synchronized (m_Files) {
+				if (ref < m_Files.size()) {
+					m_Files.setElementAt(newFile, ref);
+					return;
+				}
+				m_Files.setSize(ref + 1);
+				m_Files.setElementAt(newFile, ref);
+			}
+		}
+	}
+
 	public void removeFile(File oldFile) {
 		if (!isLocked())
 			m_Files.removeElement(oldFile);
@@ -355,6 +463,9 @@ public class SimpleProcessImage implements ProcessImageImplementation {
 	public void setFile(int fileNumber, File file) {
 		if (!isLocked()) {
 			try {
+				if (m_Files.get(fileNumber) == null)
+					throw new IllegalAddressException();
+				
 				m_Files.setElementAt(file, fileNumber);
 			} catch (IndexOutOfBoundsException ex) {
 				throw new IllegalAddressException();
@@ -364,7 +475,11 @@ public class SimpleProcessImage implements ProcessImageImplementation {
 
 	public File getFile(int fileNumber) {
 		try {
-			return m_Files.elementAt(fileNumber);
+			File result = m_Files.elementAt(fileNumber);
+			if (result == null)
+				throw new IllegalAddressException();
+			
+			return result;
 		} catch (IndexOutOfBoundsException ex) {
 			throw new IllegalAddressException();
 		}
@@ -393,6 +508,22 @@ public class SimpleProcessImage implements ProcessImageImplementation {
 			m_FIFOs.add(fifo);
 	}
 	
+	public void addFIFO(int ref, FIFO newFIFO) {
+		if (ref < 0 || ref >= 65536)
+			throw new IllegalArgumentException();
+		
+		if (!isLocked()) {
+			synchronized (m_FIFOs) {
+				if (ref < m_FIFOs.size()) {
+					m_FIFOs.setElementAt(newFIFO, ref);
+					return;
+				}
+				m_FIFOs.setSize(ref + 1);
+				m_FIFOs.setElementAt(newFIFO, ref);
+			}
+		}
+	}
+
 	public void removeFIFO(FIFO oldFIFO) {
 		if (!isLocked())
 			m_FIFOs.removeElement(oldFIFO);
@@ -401,6 +532,9 @@ public class SimpleProcessImage implements ProcessImageImplementation {
 	public void setFIFO(int fifoNumber, FIFO fifo) {
 		if (!isLocked()) {
 			try {
+				if (m_FIFOs.get(fifoNumber) == null)
+					throw new IllegalAddressException();
+				
 				m_FIFOs.setElementAt(fifo, fifoNumber);
 			} catch (IndexOutOfBoundsException ex) {
 				throw new IllegalAddressException();
@@ -410,7 +544,11 @@ public class SimpleProcessImage implements ProcessImageImplementation {
 	
 	public FIFO getFIFO(int fifoNumber) {
 		try {
-			return m_FIFOs.elementAt(fifoNumber);
+			FIFO result = m_FIFOs.elementAt(fifoNumber);
+			if (result == null)
+				throw new IllegalAddressException();
+			
+			return result;
 		} catch (IndexOutOfBoundsException ex) {
 			throw new IllegalAddressException();
 		}

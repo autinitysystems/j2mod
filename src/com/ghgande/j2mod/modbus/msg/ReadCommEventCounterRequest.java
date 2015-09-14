@@ -113,7 +113,7 @@ public final class ReadCommEventCounterRequest extends ModbusRequest {
 	 * The ModbusCoupler doesn't have a means of reporting the event counters.
 	 */
 	public ModbusResponse createResponse() {
-		throw new RuntimeException();
+		return createExceptionResponse(Modbus.ILLEGAL_FUNCTION_EXCEPTION);
 	}
 
 	/**

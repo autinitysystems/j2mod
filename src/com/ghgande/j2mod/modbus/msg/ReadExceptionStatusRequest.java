@@ -115,7 +115,7 @@ public final class ReadExceptionStatusRequest extends ModbusRequest {
 	 * device exception status.
 	 */
 	public ModbusResponse createResponse() {
-		throw new RuntimeException();
+		return createExceptionResponse(Modbus.ILLEGAL_FUNCTION_EXCEPTION);
 	}
 
 	/**

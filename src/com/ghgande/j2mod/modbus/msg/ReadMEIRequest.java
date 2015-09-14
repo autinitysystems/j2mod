@@ -159,7 +159,7 @@ public final class ReadMEIRequest extends ModbusRequest {
 	 * device.
 	 */
 	public ModbusResponse createResponse() {
-		throw new RuntimeException();
+		return createExceptionResponse(Modbus.ILLEGAL_FUNCTION_EXCEPTION);
 	}
 
 	/**

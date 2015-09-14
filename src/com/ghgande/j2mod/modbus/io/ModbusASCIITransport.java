@@ -245,17 +245,17 @@ public class ModbusASCIITransport
   private final static int calculateLRC(byte[] data, int off, int len) {
     int lrc = 0;
     for (int i = off; i < len; i++) {
-      lrc += data[i];
+      lrc += ((int) data[i]) & 0xFF;
     }
-    return ((byte) lrc) & 0xff;
+    return (-lrc) & 0xff;
   }//calculateLRC
 
   private final byte calculateLRC(byte[] data, int off, int length, int tailskip) {
     int lrc = 0;
     for (int i = off; i < length - tailskip; i++) {
-      lrc += data[i];
+        lrc += ((int) data[i]) & 0xFF;
     }
-    return (byte) lrc;
+    return (byte) ((-lrc) & 0xff);
   }//calculateLRC
   
   public boolean getDebug() {
