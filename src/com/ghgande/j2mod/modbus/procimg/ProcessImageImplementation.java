@@ -104,7 +104,8 @@ public interface ProcessImageImplementation extends ProcessImage {
 	public void addDigitalIn(DigitalIn di);
 
 	/**
-	 * Adds a new <tt>DigitalIn</tt> instance at the given reference.
+	 * Adds a new <tt>DigitalIn</tt> instance at the given reference, possibly
+	 * creating a hole between the last existing reference and the new object.
 	 * 
 	 * @param ref - the reference for the new instance.
 	 * @param di
@@ -143,7 +144,8 @@ public interface ProcessImageImplementation extends ProcessImage {
 	public void addInputRegister(InputRegister reg);
 
 	/**
-	 * Adds a new <tt>InputRegister</tt> instance.
+	 * Adds a new <tt>InputRegister</tt> instance, possibly
+	 * creating a hole between the last existing reference and the new object.
 	 * 
 	 * @param ref - The reference for the new instance.
 	 * @param reg
@@ -182,7 +184,8 @@ public interface ProcessImageImplementation extends ProcessImage {
 	public void addRegister(Register reg);
 
 	/**
-	 * Adds a new <tt>Register</tt> instance.
+	 * Adds a new <tt>Register</tt> instance, possibly
+	 * creating a hole between the last existing reference and the new object.
 	 * 
 	 * @param ref - the reference for the new instance.
 	 * @param reg
@@ -221,7 +224,8 @@ public interface ProcessImageImplementation extends ProcessImage {
 	public void addFile(File reg);
 
 	/**
-	 * Adds a new <tt>File</tt> instance.
+	 * Adds a new <tt>File</tt> instance, possibly
+	 * creating a hole between the last existing reference and the new object.
 	 * 
 	 * @param ref - the reference for the new isntance.
 	 * @param reg
@@ -260,7 +264,8 @@ public interface ProcessImageImplementation extends ProcessImage {
 	public void addFIFO(FIFO reg);
 
 	/**
-	 * Adds a new <tt>FIFO</tt> instance.
+	 * Adds a new <tt>FIFO</tt> instance, possibly
+	 * creating a hole between the last existing reference and the new object.
 	 * 
 	 * @param ref - the reference for the new instance.
 	 * @param reg

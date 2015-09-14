@@ -74,8 +74,8 @@ import java.util.Vector;
  * 
  * <p>
  * The image has a simple linear address space for, analog, digital and file
- * objects. There are no "holes" between objects in this model. File objects
- * that are created with file numbers will have the number ignored.
+ * objects. Holes may be created by adding a object with a reference after the
+ * last object reference of that type.
  * 
  * @author Dieter Wimberger
  * @version 1.2rc1 (09/11/2004)
