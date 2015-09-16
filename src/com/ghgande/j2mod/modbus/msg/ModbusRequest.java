@@ -136,6 +136,7 @@ public abstract class ModbusRequest extends ModbusMessageImpl {
 		} else {
 			response.setHeadless();
 		}
+		response.setUnitID(getUnitID());
 		return response;
 	}
 
