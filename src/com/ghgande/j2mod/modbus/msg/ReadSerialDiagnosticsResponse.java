@@ -34,7 +34,7 @@
 
 /***
  * Java Modbus Library (j2mod)
- * Copyright (c) 2010-2012, greenHouse Gas and Electric
+ * Copyright (c) 2010-2015, greenHouse Gas and Electric
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -85,10 +85,10 @@ public final class ReadSerialDiagnosticsResponse extends ModbusResponse {
 	 * Message fields.
 	 */
 	private int m_Function;
-	private	short	m_Data[] = new short[0];
+	private	short	m_Data;
 
 	/**
-	 * getFunction -- get the sub-function.
+	 * getFunction -- Get the DIAGNOSTICS sub-function.
 	 * 
 	 * @return
 	 */
@@ -97,80 +97,63 @@ public final class ReadSerialDiagnosticsResponse extends ModbusResponse {
 	}
 
 	/**
-	 * setStatus -- set the device's status.
+	 * setFunction - Set the DIAGNOSTICS sub-function.
 	 * 
-	 * @param status
+	 * @param function - DIAGNOSTICS command sub-function.
 	 */
 	public void setFunction(int function) {
 		m_Function = function;
-		
-		int size = 0;
-		
-		switch (function) {
-		case 0:
-		case 1:
-		case 2:
-		case 3:
-		case 4:
-		case 10:
-		case 11:
-		case 12:
-		case 13:
-		case 14:
-		case 15:
-		case 16:
-		case 17:
-		case 18:
-		case 20:
-			size = 1;
-			break;
-		}
-		m_Data = new short[size];
-		setDataLength(2 + (size * 2));
+		m_Data = 0;
 	}
 	
 	/**
 	 * getWordCount -- get the number of words in m_Data.
 	 */
 	public int getWordCount() {
-		if (m_Data != null)
-			return m_Data.length;
-		
-		return 0;
+		return 1;
 	}
 	
 	/**
 	 * getData -- return the first data item.
 	 */
 	public int getData() {
-		return getData(0);
+		return m_Data;
 	}
 	
 	/**
-	 * getData -- get the data item at the index
+	 * getData -- Get the data item at the index.
+	 * 
+	 * @param index - Unused, must be 0.
+	 * 
+	 * @deprecated
 	 */
 	public int getData(int index) {
-		if (index < 0 || index > getWordCount())
+		if (index != 0)
 			throw new IndexOutOfBoundsException();
 		
-		return m_Data[index];
+		return m_Data;
 	}
 	
 	/**
-	 * setData -- set the first data item.
+	 * setData -- Set the optional data value
 	 */
 	public void setData(int value) {
-		setData(0, value);
+		m_Data = (short) value;
 	}
 
 	/**
-	 * setData -- get the data item at the index
+	 * setData -- Set the data item at the index
+	 * 
+	 * @param index - Unused, must be 0.
+	 * @param value - Optional data value for function.
+	 * 
+	 * @deprecated
 	 */
 	public void setData(int index, int value) {
-		if (index < 0 || index > getWordCount())
+		if (index != 0)
 			throw new IndexOutOfBoundsException();
 		
-		m_Data[index] = (short) value;
+		m_Data = (short) value;
 	}
 
 	/**
@@ -181,42 +164,35 @@ public final class ReadSerialDiagnosticsResponse extends ModbusResponse {
 	}
 
 	/**
-	 * readData -- input the Modbus message from din. If there was a header,
-	 * such as for Modbus/TCP, it will have been read already.
+	 * readData -- Read the function code and data value 
 	 */
 	public void readData(DataInput din) throws IOException {
 		m_Function = din.readShort() & 0xFFFF;
-		
-		setFunction(m_Function);
-		
-		if (m_Data.length > 0) {
-			for (int i = 0;i < m_Data.length;i++)
-				m_Data[i] = din.readShort();
-		}
+		m_Data = (short) (din.readShort() & 0xFFFF);
 	}
 
 	/**
-	 * getMessage -- format the message into a byte array.
+	 * getMessage -- Create the DIAGNOSTICS message paylaod.
 	 */
 	public byte[] getMessage() {
-		byte result[] = new byte[2 + (getWordCount() * 2)];
+		byte result[] = new byte[4];
 
 		result[0] = (byte) (m_Function >> 8);
 		result[1] = (byte) (m_Function & 0xFF);
-		for (int i = 0;i < getWordCount();i++) {
-			result[2 + (i * 2)] = (byte) (m_Data[i] >> 8);
-			result[3 + (i * 2)] = (byte) (m_Data[i] & 0xFF);
-		}
+		result[2] = (byte) (m_Data >> 8);
+		result[3] = (byte) (m_Data & 0xFF);
+
 		return result;
 	}
 
 	/**
-	 * Constructs a new <tt>ReadSerialDiagnosticsResponse</tt> instance.
+	 * Constructs a new <tt>Diagnostics</tt> response
+	 * instance.
 	 */
 	public ReadSerialDiagnosticsResponse() {
 		super();
 
 		setFunctionCode(Modbus.READ_SERIAL_DIAGNOSTICS);
-		setDataLength(2);
+		setDataLength(4);
 	}
 }
