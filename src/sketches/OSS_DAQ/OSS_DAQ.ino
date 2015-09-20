@@ -12,7 +12,7 @@
 #include <EEPROM.h>
 #include <alloca.h>
 #include <avr/wdt.h>
-#include <avg/pgmspace.h>
+#include <avr/pgmspace.h>
 
 /*
  * Hardware identification.
@@ -25,7 +25,7 @@
  *    your product to greenHouse Gas and Electric (CC-BY-SA).
  */
  
-char copyright_notice[] PROGMEM = "Copyright 2014, greenHouse Gas and Electric, CC-BY-SA 4.0 Intl.";
+const char copyright_notice[] PROGMEM = "Copyright 2014-2015, greenHouse Gas and Electric, CC-BY-SA 4.0 Intl.";
 
 /*
  * Pin assignments.
@@ -118,9 +118,14 @@ unsigned    short   modbus_regs[MODBUS_REGS];
 #define HAS_FILES /* READ/WRITE FILE RECORD */
 #define HAS_COUNTS /* GET COMM EVENT COUNTER */
 #define HAS_LOG /* GET COMM EVENT LOG */
+#define HAS_DIAGS /* DIAGNOSTICS */
 
 #if defined(HAS_LOG) && !defined(HAS_COUNTS)
 #error Event log depends on event counters.
+#endif
+
+#if defined(HAS_DIAGS) && !defined(HAS_COUNTS)
+#error Diagnostics depend on event counters.
 #endif
 
 /*
@@ -128,17 +133,22 @@ unsigned    short   modbus_regs[MODBUS_REGS];
  */
 #if defined(HAS_MEI) || defined(HAS_SRVR_ID)
 #ifdef HAS_MEI
-char company_name[] PROGMEM = "greenHouse Gas and Electric";
+const char company_name[] PROGMEM = "greenHouse Gas and Electric";
 #endif
-char product_name[] PROGMEM = "OSS_DAQ";
+const char product_name[] PROGMEM = "OSS_DAQ";
 #ifdef HAS_MEI
-char version_text[] PROGMEM = "v1.01";
+const char version_text[] PROGMEM = "v1.02";
 #endif
 #endif
 
 #ifdef HAS_FIFO
 /**
  * get_fifo_count - Return "31" for valid ADC queues, -1 otherwise.
+ *
+ * The FIFO feature allows 4 different ADC values to be read in bursts
+ * of 31 values.  The FIFOs are addressed 0..3, which differs from the
+ * Modbus definition in that FIFOs are mapped into the register map
+ * in other devices.
  */
 char get_fifo_count(char fifo) {
   if (fifo < 0 || fifo > 3)
@@ -162,6 +172,12 @@ short get_fifo_value(char fifo) {
 #endif
 
 #ifdef HAS_FILES
+
+/*
+ * RECORD_SIZE controls both the maximum number of registers in each record as well
+ * as the number of records in the file.  The value should support the largest possible
+ * record, and no more.
+ */
 #define  RECORD_SIZE  64
 #define  FILE_BASE 128
 
@@ -190,6 +206,14 @@ void file_put_value(unsigned short file, unsigned short record, unsigned char of
 
   write_eeprom_short(address, value);
 }
+#endif
+
+#ifdef HAS_DIAGS
+unsigned short modbus_message_total_count;
+unsigned short modbus_message_crc_error_count;
+unsigned short modbus_message_exception_count;
+unsigned short modbus_message_no_response_count;
+unsigned short modbus_message_overrun_count;
 #endif
 
 /*
@@ -509,6 +533,9 @@ enum {
         FC_READ_INPUT_REGISTERS = 0x04,
         FC_WRITE_SINGLE_COIL = 0x05,
         FC_WRITE_SINGLE_REGISTER  = 0x06,
+#ifdef HAS_DIAGS
+        FC_DIAGNOSTICS = 0x08,
+#endif
 #ifdef HAS_COUNTS
         FC_GET_COMM_EVENT_COUNTER = 0x0B,
 #endif
@@ -717,11 +744,16 @@ void modbus_write() {
 }
 
 void modbus_exception(unsigned char code) {
+  char is_broadcast = modbus_in[0] == 0;
   /*
    * NEVER report an exception on a broadcast message.
    */
-  if (modbus_in[0] == 0)
+  if (is_broadcast) {
+#ifdef HAS_DIAGS
+    modbus_message_no_response_count++;
+#endif
     return;
+  }
     
   /*
    * Copy the command code from the input packet to the output packet,
@@ -736,6 +768,9 @@ void modbus_exception(unsigned char code) {
   modbus_out[modbus_out_cnt++] = function;
   modbus_out[modbus_out_cnt++] = code;
   
+#ifdef HAS_DIAGS
+  modbus_message_exception_count++;
+#endif
   modbus_write();
 }
 
@@ -971,6 +1006,56 @@ illegal_data_address:
   modbus_write();
 }
 
+#ifdef HAS_DIAGS
+void slave_diagnostics() {
+  int function = modbus_get_short(2);
+  int value = modbus_get_short(4);
+  int response_value = 0;
+
+  if (function < 0 || function == 19 || function > 20) {
+    modbus_exception(EX_ILLEGAL_DATA_VALUE);
+    return;
+  }
+  modbus_out_cnt = 0;
+  
+  modbus_out[modbus_out_cnt++] = modbus_unit;
+  modbus_out[modbus_out_cnt++] = FC_DIAGNOSTICS;
+  modbus_put_short(function);
+  
+  switch(function) {
+    case 0:
+      response_value = value;
+      break;
+    case 11:
+      response_value = modbus_message_total_count;
+      break;
+    case 12:
+      response_value = modbus_message_crc_error_count;
+      break;
+    case 13:
+      response_value = modbus_message_exception_count;
+      break;
+    case 14:
+      response_value = event_count;
+      break;
+    case 15:
+      response_value = modbus_message_no_response_count;
+      break;
+    case 18:
+      response_value = modbus_message_overrun_count;
+      break;
+    default:
+      break;
+  }
+  
+  modbus_put_short(response_value);
+#ifdef HAS_COUNTS
+  event_count++;
+#endif
+  modbus_write();
+}
+#endif
+
 #ifdef HAS_COUNTS
 void slave_get_comm_event_counter() {
   modbus_out_cnt = 0;
@@ -1041,17 +1126,13 @@ void slave_write_multiple_coils() {
    */
   for (i = 0;i < coil_count;i++) {
     if (! is_coil_setable(coil_start + i)) {
-      if (! is_broadcast)
-        modbus_exception(EX_ILLEGAL_DATA_ADDRESS);
-        
+      modbus_exception(EX_ILLEGAL_DATA_ADDRESS);      
       return;
     }
   }
   
   if ((coil_count + 7) >> 3 != byte_count) {
-    if (! is_broadcast)
-      modbus_exception(EX_ILLEGAL_DATA_VALUE);
-      
+    modbus_exception(EX_ILLEGAL_DATA_VALUE);      
     return;
   }
   
@@ -1071,8 +1152,12 @@ void slave_write_multiple_coils() {
 #ifdef HAS_COUNTS
   event_count++;
 #endif
-  if (is_broadcast)
+  if (is_broadcast) {
+#ifdef HAS_DIAGS
+    modbus_message_no_response_count++;
+#endif
     return;
+  }
     
   modbus_out_cnt = 0;
   
@@ -1138,8 +1223,12 @@ void slave_write_single_register() {
 #ifdef HAS_COUNTS
   event_count++;
 #endif
-  if (is_broadcast)
+  if (is_broadcast) {
+#ifdef HAS_DIAGS
+    modbus_message_no_response_count++;
+#endif
     return;
+  }
     
   modbus_out_cnt = 0;
   modbus_out[modbus_out_cnt++] = modbus_unit;
@@ -1154,7 +1243,7 @@ void slave_write_single_register() {
 void slave_write_multiple_registers() {
   unsigned short address = modbus_get_short(2);
   unsigned short count = modbus_get_short(4);
-  unsigned char  bytes = modbus_in_[6];
+  unsigned char  bytes = modbus_in[6];
   unsigned char i;
   unsigned char is_broadcast = modbus_in[0] == 0;
   
@@ -1162,9 +1251,7 @@ void slave_write_multiple_registers() {
    * Unsigned math means never knowing when you're going to wrap ...
    */
   if (address >= modbus_regs_cnt || (address + count) > modbus_regs_cnt) {
-    if (! is_broadcast)
-      modbus_exception(EX_ILLEGAL_DATA_ADDRESS);
-      
+    modbus_exception(EX_ILLEGAL_DATA_ADDRESS);      
     return;
   }
   
@@ -1172,9 +1259,7 @@ void slave_write_multiple_registers() {
    * Verify the byte count against the register count.
    */
   if (count * 2 != bytes) {
-    if (! is_broadcast)
-      modbus_exception(EX_ILLEGAL_DATA_VALUE);
-      
+    modbus_exception(EX_ILLEGAL_DATA_VALUE);      
     return;
   }
   
@@ -1184,8 +1269,12 @@ void slave_write_multiple_registers() {
 #ifdef HAS_COUNTS
   event_count++;
 #endif
-  if (is_broadcast)
+  if (is_broadcast) {
+#ifdef HAS_DIAGS
+    modbus_message_no_response_count++;
+#endif
     return;
+  }
     
   modbus_out_cnt = 0;
   modbus_out[modbus_out_cnt++] = modbus_unit;
@@ -1215,7 +1304,11 @@ void slave_report_server_id() {
   modbus_out[modbus_out_cnt++] = modbus_unit;
   modbus_out[modbus_out_cnt++] = FC_REPORT_SERVER_ID;
   modbus_out[modbus_out_cnt++] = 2 + object_length;
-  modbus_out[modbus_out_cnt++] = modbus_unit;
+  
+  /*
+   * greenHouse Modbus products report 99 as their identifier.
+   */
+  modbus_out[modbus_out_cnt++] = 99;
   modbus_out[modbus_out_cnt++] = 0xFF;
   
   strcpy_P((char *) modbus_out + modbus_out_cnt, product_name);
@@ -1436,11 +1529,17 @@ void loop() {
       
     return;
   }
+#ifdef HAS_DIAGS
+  modbus_message_total_count++;
+#endif
   
   /*
    * Ignore packets with CRC errors and those not addressed to us.
    */
   if (! modbus_check_crc()) {
+#ifdef HAS_DIAGS
+    modbus_message_crc_error_count++;
+#endif
 #ifdef HAS_LOG
     if (modbus_in[0] == modbus_unit) {
       unsigned char log_value = 0x82;
@@ -1450,6 +1549,10 @@ void loop() {
         
       modbus_add_comm_log_entry(log_value);
     }
+#endif
+#ifdef HAS_DIAGS
+    if (modbus_in_cnt == MAX_PDU_IN)
+      modbus_message_overrun_count++;
 #endif
     modbus_in_cnt = 0;
     return;
@@ -1475,27 +1578,41 @@ void loop() {
   switch(modbus_in[1]) {
     case FC_READ_COILS:
     case FC_READ_DISCRETE_INPUTS:
-      if (is_broadcast)
+      if (is_broadcast) {
+#ifdef HAS_DIAGS
+        modbus_message_no_response_count++;
+#endif
         goto done;
-        
+      }
       slave_read_multiple_coils();
       break;
     case FC_WRITE_SINGLE_COIL:
       slave_write_single_coil();
       break;
+#ifdef HAS_DIAGS
+    case FC_DIAGNOSTICS:
+      slave_diagnostics();
+      break;
+#endif
 #ifdef HAS_COUNTS
     case FC_GET_COMM_EVENT_COUNTER:
-      if (is_broadcast)
+      if (is_broadcast) {
+#ifdef HAS_DIAGS
+        modbus_message_no_response_count++;
+#endif
         goto done;
-        
+      }
       slave_get_comm_event_counter();
       break;
 #endif
 #ifdef HAS_LOG
     case FC_GET_COMM_EVENT_LOG:
-      if (is_broadcast)
+      if (is_broadcast) {
+#ifdef HAS_DIAGS
+        modbus_message_no_response_count++;
+#endif
         goto done;
-        
+      }
       slave_get_comm_event_log();
       break;
 #endif
@@ -1506,9 +1623,12 @@ void loop() {
 #endif
     case FC_READ_HOLDING_REGISTERS:
     case FC_READ_INPUT_REGISTERS:
-      if (is_broadcast)
+      if (is_broadcast) {
+#ifdef HAS_DIAGS
+        modbus_message_no_response_count++;
+#endif
         goto done;
-        
+      }
       slave_read_registers();
       break;
     case FC_WRITE_SINGLE_REGISTER:
@@ -1525,25 +1645,34 @@ void loop() {
 #endif
 #ifdef HAS_SRVR_ID
     case FC_REPORT_SERVER_ID:
-      if (is_broadcast)
+      if (is_broadcast) {
+#ifdef HAS_DIAGS
+        modbus_message_no_response_count++;
+#endif
         goto done;
-        
+      }
       slave_report_server_id();
       break;
 #endif
 #ifdef HAS_FIFO
     case FC_READ_FIFO:
-      if (is_broadcast)
+      if (is_broadcast) {
+#ifdef HAS_DIAGS
+        modbus_message_no_response_count++;
+#endif
         goto done;
-        
+      }
       slave_read_fifo();
       break;
 #endif
 #ifdef HAS_FILES
     case FC_READ_FILE_RECORD:
-      if (is_broadcast)
+      if (is_broadcast) {
+#ifdef HAS_DIAGS
+        modbus_message_no_response_count++;
+#endif
         goto done;
-        
+      }
       slave_read_file_record();
       break;
     case FC_WRITE_FILE_RECORD:
@@ -1552,13 +1681,20 @@ void loop() {
 #endif
 #ifdef HAS_MEI
     case FC_READ_MEI:
-      if (is_broadcast)
+      if (is_broadcast) {
+#ifdef HAS_DIAGS
+        modbus_message_no_response_count++;
+#endif
         goto done;
-        
+      }
       slave_read_device_identification();
       break;
 #endif
     default:
+      /*
+       * Don't count broadcast "illegal function" exceptions towards the
+       * "no response" counter.
+       */
       if (is_broadcast)
         goto done;
         
