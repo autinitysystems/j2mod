@@ -39,7 +39,19 @@ import java.net.UnknownHostException;
 
 import com.ghgande.j2mod.modbus.ModbusException;
 import com.ghgande.j2mod.modbus.io.ModbusTCPTransaction;
-import com.ghgande.j2mod.modbus.msg.*;
+import com.ghgande.j2mod.modbus.msg.ReadCoilsRequest;
+import com.ghgande.j2mod.modbus.msg.ReadCoilsResponse;
+import com.ghgande.j2mod.modbus.msg.ReadInputDiscretesRequest;
+import com.ghgande.j2mod.modbus.msg.ReadInputDiscretesResponse;
+import com.ghgande.j2mod.modbus.msg.ReadInputRegistersRequest;
+import com.ghgande.j2mod.modbus.msg.ReadInputRegistersResponse;
+import com.ghgande.j2mod.modbus.msg.ReadMultipleRegistersRequest;
+import com.ghgande.j2mod.modbus.msg.ReadMultipleRegistersResponse;
+import com.ghgande.j2mod.modbus.msg.WriteCoilRequest;
+import com.ghgande.j2mod.modbus.msg.WriteCoilResponse;
+import com.ghgande.j2mod.modbus.msg.WriteMultipleCoilsRequest;
+import com.ghgande.j2mod.modbus.msg.WriteMultipleRegistersRequest;
+import com.ghgande.j2mod.modbus.msg.WriteSingleRegisterRequest;
 import com.ghgande.j2mod.modbus.net.TCPMasterConnection;
 import com.ghgande.j2mod.modbus.procimg.InputRegister;
 import com.ghgande.j2mod.modbus.procimg.Register;
@@ -316,5 +328,16 @@ public class ModbusTCPMaster {
     m_Transaction.setRequest(m_WriteMultipleRegistersRequest);
     m_Transaction.execute();
   }//writeMultipleRegisters
+
+	public void setUnitId(int i) {
+		m_ReadCoilsRequest.setUnitID(i);
+		m_ReadInputDiscretesRequest.setUnitID(i);
+		m_WriteCoilRequest.setUnitID(i);
+		m_WriteMultipleCoilsRequest.setUnitID(i);
+		m_ReadInputRegistersRequest.setUnitID(i);
+		m_ReadMultipleRegistersRequest.setUnitID(i);
+		m_WriteSingleRegisterRequest.setUnitID(i);
+		m_WriteMultipleRegistersRequest.setUnitID(i);
+	}
 
 }//class ModbusTCPMaster

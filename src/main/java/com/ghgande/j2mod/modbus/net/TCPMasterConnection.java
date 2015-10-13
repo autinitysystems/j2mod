@@ -61,12 +61,6 @@ public class TCPMasterConnection {
 	private ModbusTCPTransport m_ModbusTransport;
 	
 	/**
-	 * m_useUrgentData - sent a byte of urgent data when testing the TCP
-	 * connection.
-	 */
-	private boolean m_useUrgentData = false;
-
-	/**
 	 * Prepares the associated <tt>ModbusTransport</tt> of this
 	 * <tt>TCPMasterConnection</tt> for use.
 	 * 
@@ -110,29 +104,6 @@ public class TCPMasterConnection {
 	 * @return <tt>true</tt> if connected, <tt>false</tt> otherwise.
 	 */
 	public synchronized boolean isConnected() {
-		if (m_Connected && m_Socket != null) {
-			if (!m_Socket.isConnected() || m_Socket.isClosed()
-					|| m_Socket.isInputShutdown()
-					|| m_Socket.isOutputShutdown()) {
-				try {
-					m_Socket.close();
-				} catch (IOException e) {
-					// Blah.
-				}
-				m_Connected = false;
-			} else {
-				try {
-					m_Socket.sendUrgentData(0);
-				} catch (IOException e) {
-					m_Connected = false;
-					try {
-						m_Socket.close();
-					} catch (IOException e1) {
-						// Do nothing.
-					}
-				}
-			}
-		}
 		return m_Connected;
 	}// isConnected
 
@@ -233,14 +204,6 @@ public class TCPMasterConnection {
 	public void setAddress(InetAddress adr) {
 		m_Address = adr;
 	}// setAddress
-	
-	public boolean getUseUrgentData() {
-		return m_useUrgentData;
-	}
-	
-	public void setUseUrgentData(boolean b) {
-		m_useUrgentData = b;
-	}
 
 	/**
 	 * Constructs a <tt>TCPMasterConnection</tt> instance with a given
