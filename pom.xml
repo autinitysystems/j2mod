@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.ghgande</groupId>
 	<artifactId>j2mod</artifactId>
-	<version>1.0.4-SNAPSHOT</version>
+	<version>1.0.4.AUTINITY</version>
 
     <dependencies>
 		<dependency>
